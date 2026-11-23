@@ -169,7 +169,7 @@ Regla de autorización: un usuario autenticado cuya cuenta no tenga fila en `sta
 - **CA-09b:** si al aprobar el horario ya tiene una cita confirmada del mismo odontólogo, la API devuelve `409 SLOT_UNAVAILABLE`, no se crea cita y la solicitud permanece `pending` [D-10].
 - **CA-09c:** aprobar dos veces la misma solicitud, o dos aprobaciones concurrentes, resulta en una sola cita; la repetición devuelve la misma cita.
 - **CA-09d:** rechazar una solicitud `pending` la pasa a `rejected` (con motivo opcional corto, sin datos clínicos) y no crea cita; aprobar una solicitud `rejected` o rechazar una `approved` devuelve `409 REQUEST_ALREADY_DECIDED`.
-- **CA-09e:** al aprobar se revalida: odontólogo activo, intervalo dentro de una franja vigente y horario aún en el futuro; si el horario ya pasó, `409 REQUEST_EXPIRED` [D-06]. La ventana de 1 hora–30 días se exige al **crear** la solicitud, no al aprobarla.
+- **CA-09e:** al aprobar se revalida: odontólogo activo, intervalo dentro de una franja vigente y horario aún en el futuro; si el horario ya pasó, `409 REQUEST_EXPIRED` [D-06]; si el odontólogo está inactivo o el intervalo queda fuera de su franja vigente, `409 SLOT_UNAVAILABLE` (aprobado 2026-11-23; el motivo interno viaja en `DETAIL`: `doctor_inactive` / `outside_weekly_schedule`). La ventana de 1 hora–30 días se exige al **crear** la solicitud, no al aprobarla.
 - **CA-09f:** personal no autorizado (`401/403`) y pacientes anónimos no pueden listar ni decidir solicitudes.
 
 ### RF-10 — Verificación de salud y modos operativos (nuevo)

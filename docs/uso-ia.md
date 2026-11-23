@@ -73,19 +73,19 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
-- Estado: Pendiente
+- Estado: **Completada** (commit `feat(db): garantizar integridad de reservas y aprobación atómica`; hash en `git log`)
 - Tarea del plan: T-03 (restricción `EXCLUDE USING gist`, función `approve_appointment_request` y pruebas de concurrencia contra Supabase Cloud)
-- Objetivo:
-- Prompt utilizado:
-- Archivos creados o modificados:
-- Resultado generado por Claude Code:
-- Revisión humana:
-- Pruebas ejecutadas:
-- Resultado de las pruebas:
-- Errores identificados:
-- Correcciones realizadas:
-- Commit de Git:
-- Aprendizaje obtenido:
+- Objetivo: impedir citas confirmadas superpuestas por odontólogo (RB-05) y garantizar que aprobar una solicitud pública sea atómico e idempotente (RB-12), sin modificar las migraciones 1 a 5.
+- Prompt utilizado: instrucción "T-03: Reglas de integridad de reservas" entregada a Claude Code (rol de ingeniero senior de PostgreSQL; restricciones: migración nueva, sin `db push`, sin frontend ni APIs, sin datos reales, sin commit ni push, sin declarar exitosas pruebas no ejecutadas).
+- Archivos creados o modificados: `supabase/migrations/20261123000000_booking_integrity.sql`, `supabase/verification/t03_post_apply_checks.sql`, `tests/integration/t03-booking-integrity.test.ts`, `supabase/README.md`, `spec.md` (CA-09e), `package.json` y `package-lock.json` (`pg`, `@types/pg`, script `test:t03`), `vitest.integration.config.ts`.
+- Resultado generado por Claude Code: `appointments_no_overlap` (`EXCLUDE USING gist (doctor_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (status = 'confirmed')`) y `public.approve_appointment_request(uuid, uuid)`: `SELECT … FOR UPDATE`, devuelve la misma cita si ya está aprobada, revalida futuro, odontólogo activo y franja semanal, inserta cita, actualiza solicitud y audita en una transacción; `SECURITY INVOKER`, `search_path` vacío, `EXECUTE` solo para `service_role`; errores `P0001` con el código estable como mensaje.
+- Revisión humana: el responsable revisó el diseño, aprobó usar `SLOT_UNAVAILABLE` (con `DETAIL`) para odontólogo inactivo o fuera de franja, autorizó y aplicó la migración en DentalFlow-Test y DentalFlow (desarrollo) y ejecutó las pruebas.
+- Pruebas ejecutadas: validación previa del asistente en PGlite (Postgres local en memoria; 19 escenarios secuenciales y las 6 comprobaciones SQL, sin concurrencia real ni roles de Supabase); en Supabase Cloud, `npm run test:t03` ejecutado por el responsable contra DentalFlow-Test.
+- Resultado de las pruebas: PGlite, 19 de 19 aprobados. DentalFlow-Test, **17 pruebas aprobadas** (informado por el responsable): 5 de RB-05 (mismo horario `23P01`, odontólogos distintos, bloques contiguos, cita cancelada, solicitudes pendientes), 10 de RB-12 (aprobación, repetida, 5 concurrentes, 2 solicitudes del mismo bloque, horario ocupado, doctores distintos, rechazada, expirada, fuera de franja, inexistente) y 2 de privilegios (`anon`, `authenticated`). Migración aplicada en ambos proyectos. No se informó la ejecución de `t03_post_apply_checks.sql` en Supabase.
+- Errores identificados: (1) la comprobación 3 de `t03_post_apply_checks.sql` comparaba `proconfig` como texto y fallaba por el escape de comillas; (2) `spec.md` no definía el código para odontólogo inactivo o fuera de franja al aprobar.
+- Correcciones realizadas: (1) se comparó con `proconfig @> array['search_path=""']`, verificado en PGlite; (2) el responsable aprobó `SLOT_UNAVAILABLE` y se registró en CA-09e.
+- Commit de Git: `feat(db): garantizar integridad de reservas y aprobación atómica` (hash: ver `git log`).
+- Aprendizaje obtenido: la exclusión en PostgreSQL es la garantía real ante concurrencia y la función solo debe traducirla a un error estable; validar primero en un Postgres local detectó fallos sin tocar Supabase, pero la concurrencia solo se demuestra con conexiones independientes contra el servicio real.
 
 ### Ciclo 2 (IA-02) — Solicitudes, reservas y aprobación
 

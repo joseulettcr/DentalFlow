@@ -15,9 +15,11 @@ Migraciones y datos sintéticos de **T-02**. Entorno principal: **Supabase Cloud
 | `migrations/20261122230400_rls_and_grants.sql` | RLS en todas las tablas y privilegios mínimos por rol de base de datos |
 | `seed.sql` | 2 odontólogos y sus horarios (datos ficticios, idempotente) |
 | `staff_profiles.example.sql` | Plantilla para enlazar las cuentas `admin` y `receptionist` (no se ejecuta sola) |
-| `verification/t02_post_apply_checks.sql` | Comprobaciones de solo lectura posteriores a la aplicación |
+| `verification/t02_post_apply_checks.sql` | Comprobaciones de solo lectura posteriores a la aplicación (T-02) |
+| `migrations/20261123000000_booking_integrity.sql` | T-03: `appointments_no_overlap` y `approve_appointment_request` |
+| `verification/t03_post_apply_checks.sql` | Comprobaciones de solo lectura de T-03 |
 
-Quedan **fuera de T-02**, a propósito: la restricción `EXCLUDE` de no superposición de citas (RB-05) y la función `approve_appointment_request` (RB-12), que son T-03.
+Quedan **fuera de T-02**, a propósito: la restricción `EXCLUDE` de no superposición de citas (RB-05) y la función `approve_appointment_request` (RB-12), que son T-03 (ver su sección más abajo).
 
 ## Aplicar en Supabase Cloud
 
@@ -34,7 +36,7 @@ Requisitos: Supabase CLI instalada y el proyecto ya vinculado (`supabase link`).
    ```
 3. **Cargar el seed.** Opción A: pegar `seed.sql` en *Dashboard > SQL Editor* y ejecutarlo. Opción B: `supabase db push --include-seed` si tu versión de la CLI lo soporta (`supabase db push --help`). Es idempotente.
 4. **Crear las cuentas de personal** en *Dashboard > Authentication > Users* (marca *Auto Confirm User*), con correos ficticios. La contraseña se entrega por un canal privado y no se guarda en el repositorio. Luego ejecuta una copia editada de `staff_profiles.example.sql` en el SQL Editor.
-5. **Verificar:** ejecuta `verification/t02_post_apply_checks.sql` completo en el SQL Editor (es una sola consulta de solo lectura, con una fila por comprobación); las 17 filas deben mostrar `ok = true`. La fila 9 (RB-05 pendiente) dejará de cumplirse a propósito cuando se aplique T-03.
+5. **Verificar:** ejecuta `verification/t02_post_apply_checks.sql` completo en el SQL Editor (es una sola consulta de solo lectura, con una fila por comprobación); las 17 filas deben mostrar `ok = true`. La fila 9 (RB-05 pendiente) dejará de cumplirse a propósito cuando se aplique T-03; usa entonces `verification/t03_post_apply_checks.sql`.
 6. **Revisar la Data API** en *Dashboard > Settings > API*: el esquema `private` **no** debe figurar en *Exposed schemas*.
 
 Las claves (`SUPABASE_SERVICE_ROLE_KEY`, etc.) van solo en `.env.local` y en las variables de entorno de Vercel; nunca en Git ni en variables `VITE_*`.
@@ -51,6 +53,26 @@ Repite los pasos 1 a 6 sobre el proyecto nuevo (con `supabase link --project-ref
 | `service_role` (solo backend) | Privilegios mínimos por tabla; sin `DELETE` en solicitudes, citas, odontólogos ni sincronización; `appointment_audit` solo `SELECT` e `INSERT`. |
 
 La diferencia entre `admin` y `receptionist` (matriz de `spec.md` §1) la aplica el **backend**, comprobando `staff_profiles.role` en cada llamada (RF-01, CA-01c). La base de datos deniega por defecto y no concede a ningún usuario autenticado acceso directo a datos de pacientes.
+
+## T-03 — Integridad de reservas (migración `20261123000000_booking_integrity.sql`)
+
+**Estado: completada (2026-11-23). Aplicada en DentalFlow-Test y DentalFlow (desarrollo); `npm run test:t03` con 17 pruebas aprobadas en pruebas (informado por el responsable).** No modifica las migraciones 1 a 5.
+
+- **RB-05:** `appointments_no_overlap`, `EXCLUDE USING gist (doctor_id WITH =, tstzrange(starts_at, ends_at, '[)') WITH &&) WHERE (status = 'confirmed')`. Falla con SQLSTATE `23P01` (el backend lo traduce a `409 SLOT_UNAVAILABLE`). Odontólogos distintos pueden coincidir; cancelar libera el bloque; las solicitudes pendientes viven en otra tabla y nunca bloquean (RB-11).
+- **RB-12:** `public.approve_appointment_request(p_request_id uuid, p_actor_user_id uuid default null)` devuelve `(appointment_id, request_status, already_approved)`. Bloquea la solicitud con `SELECT … FOR UPDATE`, es idempotente (repetir devuelve la misma cita), revalida futuro, odontólogo activo y franja semanal, inserta la cita, actualiza la solicitud y audita, todo en la transacción del llamador. `SECURITY INVOKER`, `search_path` vacío, `EXECUTE` solo para `service_role`.
+- **Errores controlados** (`SQLSTATE P0001`, el *mensaje* es el código; `DETAIL` el motivo interno): `NOT_FOUND` → 404; `REQUEST_ALREADY_DECIDED` (rechazada) → 409; `REQUEST_EXPIRED` (horario pasado) → 409; `SLOT_UNAVAILABLE` → 409 (detalles `overlapping_confirmed_appointment`, `doctor_inactive`, `outside_weekly_schedule`). Ante cualquier error la solicitud sigue `pending` (D-10) y no queda cita parcial.
+- **Decisión aprobada (2026-11-23, registrada en `spec.md` CA-09e):** odontólogo inactivo o fuera de franja al aprobar → `SLOT_UNAVAILABLE` con el motivo en `DETAIL`.
+
+### Procedimiento (primero en DentalFlow-Test, con autorización)
+1. `supabase db push --dry-run` debe listar solo `20261123000000`; luego `supabase db push` contra DentalFlow-Test.
+2. Ejecutar `verification/t03_post_apply_checks.sql` en el SQL Editor: 6 filas con `ok = true`.
+3. Agregar a `.env.local` la cadena de conexión Postgres de **DentalFlow-Test** (*Dashboard > Connect*, modo sesión o directa; contiene la contraseña, nunca va a Git):
+   ```bash
+   SUPABASE_DB_URL=postgresql://postgres.<ref>:<contraseña>@<host>:5432/postgres
+   ```
+   La prueba se niega a correr si la URL no contiene el *ref* de pruebas (`wzglkfidjcgaukmezyhi`, o `SUPABASE_TEST_PROJECT_REF`).
+4. `npm run test:t03`. Inserta solo datos ficticios (`@example.com`, fechas de 2031) y los elimina al terminar. Incluye concurrencia real (5 aprobaciones simultáneas de una solicitud y 2 solicitudes del mismo bloque, cada una en su propia conexión).
+5. Solo después, repetir los pasos 1 y 2 en DentalFlow (desarrollo).
 
 ## Reglas de datos que aplica la base de datos
 
