@@ -16,6 +16,7 @@
     "test:t03": "vitest run --config vitest.integration.config.ts tests/integration/t03-booking-integrity.test.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

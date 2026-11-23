@@ -71,6 +71,27 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Commit de Git: `feat(db): implementar esquema inicial Supabase y pruebas de seguridad` (hash: ver `git log`).
 - Aprendizaje obtenido: separar lo que el asistente puede verificar de lo que solo se puede comprobar en el entorno real evita registrar evidencia simulada; las pruebas contra servicios externos deben fallar de forma visible cuando faltan credenciales.
 
+### 3.4 Iteración T-04 — Autenticación del personal y autorización por rol (no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **Completada** (commit `feat(auth): implementar login del personal y autorización por rol`; hash en `git log`)
+- Tarea del plan: T-04
+- Objetivo: login con Supabase Auth, roles `admin` y `receptionist` desde `staff_profiles`, rutas protegidas, cierre de sesión y autorización aplicada en el servidor (CA-01a a CA-01d).
+- Prompts utilizados: "Cerrar T-03 e implementar T-04" y tres solicitudes de corrección posteriores (error de Vite en `/login`, mensaje "no configurado" y "No pudimos verificar tu sesión"). Restricciones: sin exponer `service_role` al frontend, sin tocar RLS, sin crear usuarios automáticamente, sin imprimir claves, sin commit ni push.
+- Archivos creados o modificados: `shared/permissions.ts`, `api/_lib/staff-auth.ts`, `api/_lib/local-env.ts`, `api/admin/me.ts`, `src/auth/*`, `src/lib/*`, `src/pages/*`, `src/router.ts`, `src/App.tsx`, `src/styles.css`, `vercel.json`, `.env.example`, `tests/unit/*`, `package.json`/`package-lock.json` (`@supabase/supabase-js`), `tsconfig.json`, `supabase/README.md`.
+- Resultado generado por Claude Code: el backend valida el token contra Supabase Auth, lee el rol de `staff_profiles` con `service_role` (solo servidor) y aplica la matriz de `spec.md` §1 (401 `UNAUTHENTICATED`, 403 `FORBIDDEN`, 503 `SERVICE_UNAVAILABLE`); React obtiene el rol de `/api/admin/me` y solo muestra opciones.
+- Revisión humana: el responsable creó manualmente las dos cuentas de demostración y sus perfiles, ejecutó las correcciones y **validó manualmente el login con los roles `admin` y `receptionist`** (informado por él).
+- Pruebas ejecutadas: `lint`, `typecheck`, `npm test` (43 pruebas), `build`; `curl` contra `vercel dev` real; verificación de presencia y formato de variables sin imprimir valores; consultas de solo lectura a Supabase con códigos HTTP y conteos.
+- Resultado de las pruebas: 43 de 43 aprobadas; `/api/admin/me` sin token responde 401, con token falso 401 (tras la corrección 3) y la validación manual con ambos roles fue satisfactoria.
+- Errores identificados (reales):
+  1. **Regresión en Vite:** el rewrite de `vercel.json` `/((?!api/).*)` → `/index.html` devolvía HTML para `/src/main.tsx` y `/@vite/client`; Vite fallaba con "invalid JS syntax" en `index.html`.
+  2. **Diagnóstico engañoso:** la interfaz mostraba "El inicio de sesión no está configurado" también cuando había sesión pero el backend respondía 503.
+  3. **Variables no llegaban a las funciones:** `vercel dev` (proyecto enlazado y también con `--local`) no pasa `.env.local` a las Vercel Functions; Vite sí lo lee. `/api/admin/me` respondía 503 y React mostraba "No pudimos verificar tu sesión".
+  4. **Perfiles ausentes:** `staff_profiles` del proyecto de desarrollo estaba vacía (0 filas), por lo que un usuario válido recibiría 403 hasta crear los perfiles.
+- Correcciones realizadas: (1) rewrites limitados a `/login` y `/admin/:path*`; (2) nuevo estado `unconfigured` y redirección de `/login` al panel cuando hay sesión sin rol verificable; (3) `api/_lib/local-env.ts` completa solo las variables que faltan desde `.env.local` en desarrollo local (no corre en Vercel preview/producción ni en pruebas); (4) el responsable ejecutó la plantilla de perfiles en el proyecto de desarrollo.
+- Límites conocidos: los estados de la interfaz se prueban por su lógica pura (sin jsdom); las pruebas de integración de RLS con sesión `authenticated` quedan para T-14; en Vercel (despliegue) las variables deben configurarse en el proyecto (T-18).
+- Commit de Git: `feat(auth): implementar login del personal y autorización por rol` (hash: ver `git log`).
+- Aprendizaje obtenido: el comportamiento de `vercel dev` con variables de entorno y rewrites no es el de producción ni el de Vite solo; conviene verificar con peticiones reales y diferenciar "no configurado" de "servicio no disponible" para no ocultar la causa.
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: **Completada** (commit `feat(db): garantizar integridad de reservas y aprobación atómica`; hash en `git log`)

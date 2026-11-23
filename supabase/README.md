@@ -44,6 +44,27 @@ Las claves (`SUPABASE_SERVICE_ROLE_KEY`, etc.) van solo en `.env.local` y en las
 ### Reproducir en un proyecto nuevo
 Repite los pasos 1 a 6 sobre el proyecto nuevo (con `supabase link --project-ref <ref>`). Las migraciones no dependen de datos previos. No hay migraciones *down*: para repetir una prueba, crea otro proyecto o elimina las tablas manualmente desde el SQL Editor.
 
+## Usuarios de demostración y login (T-04)
+
+Las cuentas **no se crean automáticamente** (CA-01d: nunca desde la aplicación). Se crean a mano en el proyecto que uses (primero DentalFlow-Test):
+
+1. *Dashboard > Authentication > Users > Add user > Create new user*: correo ficticio (por ejemplo `admin.demo@example.com` y `recepcion.demo@example.com`), contraseña propia y *Auto Confirm User* activado. La contraseña se entrega por un canal privado y no se escribe en el repositorio.
+2. Copia `staff_profiles.example.sql`, reemplaza los dos correos y ejecútalo en el *SQL Editor*; debe listar los dos perfiles con roles `admin` y `receptionist`.
+3. En `.env.local` (ignorado por Git) deben existir, para el **mismo** proyecto: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` (esta última solo la lee el backend; nunca va en `VITE_*`). En Vercel se configuran como variables de entorno del proyecto.
+4. `npm run dev` y abre `http://localhost:3000/login`.
+
+Comprobación manual sugerida:
+
+| Caso | Resultado esperado |
+|---|---|
+| Visitar `/admin/citas` sin sesión | Redirige a `/login` |
+| Correo o contraseña incorrectos | Mensaje "Correo o contraseña incorrectos." |
+| Ingresar como `admin` | Panel con las 10 opciones habilitadas |
+| Ingresar como `receptionist` | Panel; "Crear o editar odontólogos y franjas" y "Conectar o desconectar Google Calendar" marcadas "solo administrador" |
+| Cuenta creada en Auth pero **sin** fila en `staff_profiles` | Pantalla "Sin permiso" |
+| Cerrar sesión | Vuelve a `/login`; `/admin/citas` ya no abre |
+| `curl localhost:3000/api/admin/me` sin token | `401 UNAUTHENTICATED` |
+
 ## Modelo de acceso (RLS)
 
 | Rol de base de datos | Acceso |
