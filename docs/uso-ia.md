@@ -55,6 +55,22 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Commit de Git: `feat: inicializar React, Vite y Vercel Functions` (hash: ver `git log`).
 - Aprendizaje obtenido: la comprobación del mensaje de error del CLI no basta; hay que reproducir el arranque y llamar a la API para descubrir el segundo problema (puerto).
 
+### 3.3 Iteración T-02 — Modelo de datos en Supabase y prueba P-10 (no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **Completada** (commit `feat(db): implementar esquema inicial Supabase y pruebas de seguridad`; hash en `git log`)
+- Tarea del plan: T-02
+- Objetivo: versionar el esquema inicial (siete tablas `public` y tres `private`), RLS con mínimo privilegio, seed sintético y pruebas de seguridad reproducibles.
+- Prompts utilizados: instrucciones "T-02: Modelo de datos en Supabase", "T-02: Verificación de migraciones", "T-02: Prueba de seguridad P-10" y "Cierre de T-02" entregadas a Claude Code (restricciones: sin `supabase db push` por parte del asistente, sin credenciales en el repositorio, sin `service_role` en la prueba P-10, sin commit ni push hasta el cierre, sin simular resultados si no hay conexión).
+- Archivos generados: cinco migraciones en `supabase/migrations/`, `supabase/seed.sql`, `supabase/staff_profiles.example.sql`, `supabase/verification/t02_post_apply_checks.sql`, `supabase/README.md`, `tests/integration/p10-anon-data-api.test.ts`, `vitest.integration.config.ts` y ajustes en `vite.config.ts`, `package.json`, `tsconfig.json`, `eslint.config.js`.
+- Resultado generado por Claude Code: SQL escrito y revisado estáticamente; script de verificación reescrito como una sola consulta de 17 filas (el SQL Editor solo muestra el último resultado); prueba P-10 de solo lectura con control previo (`/auth/v1/health`) y salvaguarda contra claves secretas.
+- Revisión humana: el responsable autorizó y ejecutó las migraciones, el seed y las verificaciones en Supabase Cloud (el asistente no tuvo credenciales ni conexión a la base de datos en ningún momento).
+- Pruebas ejecutadas y resultados reales (informados por el responsable): migraciones aplicadas sin error en DentalFlow-Test y DentalFlow (desarrollo); ambos proyectos con 2 odontólogos y 20 franjas semanales; script SQL con 17 de 17 comprobaciones correctas en pruebas; `npm run test:p10` con 8 pruebas aprobadas; esquema `private` excluido de la Data API. El asistente ejecutó `lint`, `typecheck`, `test` y `build` localmente en el cierre (ver abajo).
+- Errores identificados: (1) la primera versión del script de verificación usaba varias sentencias y el SQL Editor mostraba solo la última; (2) el asistente no podía conectarse a Supabase, por lo que no se emitió ningún resultado remoto propio.
+- Correcciones realizadas: script convertido a una sola consulta; la verificación remota y la prueba P-10 las ejecutó el responsable.
+- Límites conocidos: el script de verificación solo se ejecutó en el proyecto de pruebas; la fila 9 (RB-05 pendiente) dejará de cumplirse a propósito en T-03; no se probó todavía el rol `authenticated` con sesión (T-04/T-14).
+- Commit de Git: `feat(db): implementar esquema inicial Supabase y pruebas de seguridad` (hash: ver `git log`).
+- Aprendizaje obtenido: separar lo que el asistente puede verificar de lo que solo se puede comprobar en el entorno real evita registrar evidencia simulada; las pruebas contra servicios externos deben fallar de forma visible cuando faltan credenciales.
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: Pendiente

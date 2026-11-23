@@ -23,7 +23,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['api/**/*.ts', '*.config.ts'],
+    files: ['api/**/*.ts', 'tests/**/*.ts', '*.config.ts'],
     languageOptions: {
       globals: globals.node,
     },
