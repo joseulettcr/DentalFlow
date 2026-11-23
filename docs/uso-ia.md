@@ -37,6 +37,24 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Commit de Git: **pendiente** (no se ha creado ningún commit).
 - Aprendizaje obtenido: pendiente.
 
+### 3.2 Iteración T-01 — Corrección de `vercel dev` (no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **Completada** (ver commit `feat: inicializar React, Vite y Vercel Functions`; hash en `git log`)
+- Tarea del plan: T-01
+- Objetivo: lograr que `npm run dev` inicie React y las Vercel Functions, manteniendo `npm run dev:frontend` solo para Vite.
+- Prompt utilizado: instrucción "Corrección de T-01" entregada a Claude Code (error `DEV_RECURSIVE_INVOCATION` de Vercel CLI 66.6.0; restricciones: sin cambios de negocio, sin reinstalar dependencias, sin tocar GitHub ni Supabase, sin commit ni push durante la corrección).
+- Archivos modificados: `package.json`, `vercel.json`; en el cierre de T-01 también `.gitignore`, `plan.md` y este documento.
+- Resultado generado por Claude Code — causa raíz en dos partes:
+  1. **Recursión:** el CLI rechaza el proyecto si el script `dev` de `package.json` es literalmente `vercel dev` (detección estática), aunque `devCommand` apuntara a otro script. Solución: `"dev": "npm run dev:vercel"` y `"dev:vercel": "vercel dev"`.
+  2. **Puerto:** `vercel dev` asigna `$PORT` y espera que el servidor escuche ahí, pero `vite --host 127.0.0.1` ignora esa variable y quedó en 5173 (raíz y `/api/health` sin respuesta, comprobado con el `devCommand` original). Solución: `devCommand` = `vite --port $PORT` en `vercel.json`.
+- Revisión humana: el responsable pidió la corrección y el cierre de T-01; la revisión del diff antes del commit queda a su cargo.
+- Pruebas ejecutadas: `npm run dev` (con `curl` a `/` y `/api/health`), `npm run dev:frontend`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+- Resultado de las pruebas: `/` responde 200 y `/api/health` responde 501 `NOT_IMPLEMENTED` (esperado hasta T-14A); `dev:frontend` sirve Vite en `127.0.0.1:5173` (200); lint, typecheck, test (1 de 1) y build terminan con exit 0. No se reejecutó `npm ci`.
+- Errores identificados: (1) `DEV_RECURSIVE_INVOCATION`; (2) desajuste de puerto entre Vercel y Vite; (3) al cerrar T-01, la línea `.env*` de `.gitignore` (agregada al enlazar Vercel) también ignoraba `.env.example`.
+- Correcciones realizadas: las dos de arriba más quitar `.env*` de `.gitignore`; `.env`, `.env.*` y `!.env.example` siguen protegiendo `.env.local` y dejan versionable `.env.example`.
+- Commit de Git: `feat: inicializar React, Vite y Vercel Functions` (hash: ver `git log`).
+- Aprendizaje obtenido: la comprobación del mensaje de error del CLI no basta; hay que reproducir el arranque y llamar a la API para descubrir el segundo problema (puerto).
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: Pendiente
