@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { ALL_PERMISSIONS, PERMISSIONS } from '../../shared/permissions'
+import { PhoneBookingPanel } from './PhoneBookingPanel'
 import { RequestsPanel } from './RequestsPanel'
 
 const ROLE_LABEL = { admin: 'Administrador', receptionist: 'Recepción' } as const
@@ -7,6 +9,7 @@ const ROLE_LABEL = { admin: 'Administrador', receptionist: 'Recepción' } as con
 /** Panel base (T-04). Las secciones reales llegan en tareas posteriores; aquí solo se muestran las opciones por rol. */
 export function AdminDashboard() {
   const { profile, status, signOut } = useAuth()
+  const [refreshKey, setRefreshKey] = useState(0)
 
   if (status === 'forbidden') {
     return (
@@ -54,7 +57,8 @@ export function AdminDashboard() {
             </li>
           ))}
         </ul>
-        <RequestsPanel canDecide={allowed.has('requests.decide')} canReadAppointments={allowed.has('appointments.read')} />
+        {allowed.has('appointments.create_phone') && <PhoneBookingPanel onCreated={() => setRefreshKey((k) => k + 1)} />}
+        <RequestsPanel canDecide={allowed.has('requests.decide')} canReadAppointments={allowed.has('appointments.read')} refreshKey={refreshKey} />
         <button type="button" onClick={() => void signOut()}>Cerrar sesión</button>
       </section>
     </main>

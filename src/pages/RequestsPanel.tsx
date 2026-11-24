@@ -34,7 +34,7 @@ function failureText(result: AdminResult<unknown>, fallback: string): string {
 const when = (item: { startsAt: string }) => `${formatClinicDate(item.startsAt)}, ${formatClinicTime(item.startsAt)}`
 
 /** Solicitudes pendientes y citas confirmadas (RF-09). La decisión se delega al backend/PostgreSQL; aquí no hay reglas. */
-export function RequestsPanel({ canDecide, canReadAppointments }: { canDecide: boolean; canReadAppointments: boolean }) {
+export function RequestsPanel({ canDecide, canReadAppointments, refreshKey = 0 }: { canDecide: boolean; canReadAppointments: boolean; refreshKey?: number }) {
   const [requests, setRequests] = useState<RequestItem[] | null>(null)
   const [appointments, setAppointments] = useState<AppointmentItem[] | null>(null)
   const [loadError, setLoadError] = useState(false)
@@ -56,7 +56,7 @@ export function RequestsPanel({ canDecide, canReadAppointments }: { canDecide: b
 
   useEffect(() => {
     void load()
-  }, [load])
+  }, [load, refreshKey])
 
   const push = (tone: LogEntry['tone'], text: string) =>
     setLog((entries) => [{ id: Date.now() + Math.random(), tone, text }, ...entries].slice(0, 5))

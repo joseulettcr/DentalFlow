@@ -90,6 +90,26 @@ La aprobación sigue siendo `approve_appointment_request` (T-03). El backend nun
 5. Conflicto: haz dos solicitudes del mismo horario (con correos distintos), aprueba una y luego la otra: la segunda muestra "el horario ya está ocupado" y sigue pendiente; recházala con **Rechazar**.
 6. Vuelve a `/disponibilidad`: el horario aprobado ya no aparece.
 
+## Reserva telefónica directa (migración `20261123020000_phone_appointments.sql`)
+
+**Estado: escrita y validada en un Postgres local en memoria (18 comprobaciones); todavía NO aplicada a Supabase Cloud.** Solo agrega una función; no modifica las migraciones 1 a 7.
+
+**Por qué hace falta una migración:** la cita y su auditoría deben guardarse en una sola transacción, la clave de idempotencia debe resolverse de forma atómica aunque dos envíos compitan, y el conflicto de horario debe salir como error controlado. Un `INSERT` desde el backend no da esas garantías. La no superposición sigue siendo la restricción `appointments_no_overlap` (T-03).
+
+`public.create_phone_appointment(doctor, nombre, correo, teléfono, inicio, clave_idempotencia, actor)` (solo `service_role`): crea la cita `confirmed` con `source = 'admin_phone'` y `created_by_user_id`, registra la auditoría (`created`), y devuelve la misma cita si la clave se repite con los mismos datos. Errores: `IDEMPOTENCY_KEY_REUSED` (409), `SLOT_UNAVAILABLE` (409), `VALIDATION_ERROR` (422: odontólogo inactivo o inicio en el pasado). El backend (`POST /api/admin/appointments`) valida primero formato, franja semanal, ventana de reserva y ocupación, con las mismas reglas de la disponibilidad pública.
+
+### Aplicar y probar (primero DentalFlow-Test, con autorización)
+1. `supabase db push --dry-run` debe listar solo `20261123020000`; luego `supabase db push`.
+2. Opcional: `npm run test:t08` (requiere `SUPABASE_DB_URL` de **pruebas**; usa datos ficticios y los elimina; incluye 6 reservas simultáneas del mismo bloque).
+
+### Validación manual en el navegador (`npm run dev`, proyecto con la migración aplicada)
+1. Inicia sesión como `receptionist` o `admin` y abre `/admin/citas`.
+2. En **Nueva cita telefónica** elige odontólogo, una fecha de lunes a viernes dentro de 30 días y un horario libre; escribe nombre, correo (`@example.com`) y teléfono opcional; pulsa **Confirmar cita**.
+3. Debe aparecer el aviso "Cita confirmada…", la cita en **Citas confirmadas próximas** (etiquetada "reserva telefónica") y el horario ya no debe aparecer libre ni en este formulario ni en `/disponibilidad`.
+4. Conflicto: en otra pestaña con sesión, reserva el mismo horario antes de confirmar en la primera; la segunda muestra "Ese horario ya no está disponible" y refresca los horarios.
+5. Una solicitud pública pendiente de ese mismo horario sigue existiendo; al aprobarla muestra "el horario ya está ocupado".
+6. Sin sesión, `curl -X POST localhost:3000/api/admin/appointments` responde `401`.
+
 ## Modelo de acceso (RLS)
 
 | Rol de base de datos | Acceso |

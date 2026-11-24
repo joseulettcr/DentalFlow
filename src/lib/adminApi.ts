@@ -24,7 +24,7 @@ export interface AppointmentItem {
 
 export type AdminResult<T> =
   | { kind: 'ok'; data: T }
-  | { kind: 'error'; status: number; code: string }
+  | { kind: 'error'; status: number; code: string; message?: string }
   | { kind: 'unavailable' }
 
 async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<AdminResult<T>> {
@@ -37,10 +37,10 @@ async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<Admi
       ...init,
       headers: { ...(init.body ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${token}` },
     })
-    const body = (await response.json().catch(() => null)) as { error?: { code?: string } } | null
+    const body = (await response.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null
     if (response.ok) return { kind: 'ok', data: body as T }
     if (response.status >= 500) return { kind: 'unavailable' }
-    return { kind: 'error', status: response.status, code: body?.error?.code ?? 'ERROR' }
+    return { kind: 'error', status: response.status, code: body?.error?.code ?? 'ERROR', message: body?.error?.message }
   } catch {
     return { kind: 'unavailable' }
   }
@@ -58,4 +58,27 @@ export const rejectRequest = (id: string, reason: string) =>
   adminFetch<{ alreadyRejected: boolean }>(`/api/admin/appointment-requests/${id}/reject`, {
     method: 'POST',
     body: JSON.stringify(reason.trim() === '' ? {} : { reason: reason.trim() }),
+  })
+
+export interface PhoneAppointmentPayload {
+  doctorId: string
+  patientName: string
+  patientEmail: string
+  patientPhone: string
+  startAt: string
+  idempotencyKey: string
+}
+
+export interface CreatedAppointment {
+  appointmentId: string
+  doctorName: string
+  startsAt: string
+  endsAt: string
+}
+
+/** Reserva telefónica directa: la cita queda confirmada de inmediato. El servidor decide origen y autor. */
+export const createPhoneAppointment = (payload: PhoneAppointmentPayload) =>
+  adminFetch<CreatedAppointment>('/api/admin/appointments', {
+    method: 'POST',
+    body: JSON.stringify({ ...payload, patientPhone: payload.patientPhone.trim() === '' ? undefined : payload.patientPhone }),
   })
