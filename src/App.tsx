@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { resolveGuard } from './auth/guard'
 import { useAuth } from './auth/useAuth'
 import { AdminDashboard } from './pages/AdminDashboard'
+import { AvailabilityPage } from './pages/AvailabilityPage'
 import { LoginPage } from './pages/LoginPage'
 import { navigate, usePathname } from './router'
 
@@ -15,6 +16,7 @@ function Welcome() {
         <p>
           La estructura técnica inicial está lista. Las funcionalidades de agenda se incorporarán en las tareas siguientes.
         </p>
+        <button type="button" onClick={() => navigate('/disponibilidad')}>Ver disponibilidad</button>
       </section>
     </main>
   )
@@ -39,6 +41,7 @@ function Routes() {
 
   if (decision.kind !== 'render') return <Loading />
   if (pathname === '/login') return <LoginPage />
+  if (pathname === '/disponibilidad') return <AvailabilityPage />
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return <AdminDashboard />
   return <Welcome />
 }

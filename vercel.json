@@ -9,6 +9,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/disponibilidad",
+      "destination": "/index.html"
+    },
+    {
       "source": "/admin/:path*",
       "destination": "/index.html"
     }

@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:p10": "vitest run --config vitest.integration.config.ts tests/integration/p10-anon-data-api.test.ts",
-    "test:t03": "vitest run --config vitest.integration.config.ts tests/integration/t03-booking-integrity.test.ts"
+    "test:t03": "vitest run --config vitest.integration.config.ts tests/integration/t03-booking-integrity.test.ts",
+    "test:t07": "vitest run --config vitest.integration.config.ts tests/integration/t07-public-requests.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",

@@ -141,3 +141,123 @@ button:focus-visible,
 .permission-list .denied {
   color: #6b7f8a;
 }
+
+.form select {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #9fb6c1;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  font: inherit;
+}
+
+.form select:focus-visible {
+  outline: 3px solid #f2b134;
+  outline-offset: 2px;
+}
+
+.schedule-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #49616f;
+  font-size: 0.9rem;
+}
+
+.slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot-list li {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #087e8b;
+  border-radius: 0.5rem;
+  color: #087e8b;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.welcome-card.wide {
+  width: min(100%, 60rem);
+}
+
+.requests-panel h2 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.request-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.request-item {
+  padding: 0.9rem 1rem;
+  border: 1px solid #d5e3e9;
+  border-radius: 0.75rem;
+}
+
+.request-item p {
+  margin: 0 0 0.25rem;
+}
+
+.request-item.confirmed {
+  border-color: #087e8b;
+  background: #f1fafb;
+}
+
+.reject-box {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.reject-box input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #9fb6c1;
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+.slot-button {
+  margin: 0;
+  background: #ffffff;
+  color: #087e8b;
+  border: 1px solid #087e8b;
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-button[aria-pressed='true'] {
+  background: #087e8b;
+  color: #ffffff;
+}
+
+.slot-list.selectable {
+  gap: 0.5rem;
+}
+
+.slot-list.selectable li {
+  padding: 0;
+  border: 0;
+}
+
+.request-form {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #d5e3e9;
+}
+
+.confirmation code {
+  display: block;
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  background: #e8f4f7;
+  font-size: 0.95rem;
+  word-break: break-all;
+}

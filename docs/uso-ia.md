@@ -92,6 +92,16 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Commit de Git: `feat(auth): implementar login del personal y autorización por rol` (hash: ver `git log`).
 - Aprendizaje obtenido: el comportamiento de `vercel dev` con variables de entorno y rewrites no es el de producción ni el de Vite solo; conviene verificar con peticiones reales y diferenciar "no configurado" de "servicio no disponible" para no ocultar la causa.
 
+### 3.5 Iteración T-05 (parcial) y T-06 — Consulta de disponibilidad (no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **T-06 completada; T-05 en curso** (solo la parte de consulta; la administración de odontólogos y franjas está pendiente)
+- Prompt utilizado: "Cerrar T-04 e implementar T-05/T-06" (solo lectura; sin crear citas ni aprobaciones).
+- Archivos: `shared/clinic-time.ts`, `shared/availability.ts`, `api/_lib/availability-service.ts`, `api/_lib/supabase-rest.ts`, `api/public/doctors.ts`, `api/public/slots.ts`, `src/pages/AvailabilityPage.tsx`, `src/lib/availabilityApi.ts`, `vercel.json`, pruebas en `tests/unit/`.
+- Resultado generado por Claude Code: cálculo puro de bloques de 30 minutos alineados a :00/:30 en `America/Costa_Rica`, ventana de reserva (1 hora a 30 días), exclusión de citas confirmadas, lectura exclusiva de columnas no sensibles, y página pública con estados de carga, vacío y error.
+- Pruebas ejecutadas y resultados: 77 pruebas unitarias aprobadas (odontólogo activo/inactivo, fecha válida/inválida, día sin horarios, espacio ocupado/libre, consulta sin escritura ni datos de pacientes); contra el proyecto de desarrollo en modo lectura: 16 horarios un lunes para la Dra. Morales, 0 un sábado, 422 para entradas inválidas.
+- Decisión de diseño: odontólogo inactivo o inexistente en `slots` → 422 (coherente con CA-02c/CA-04c/CA-08b).
+- Pendiente de T-05: alta/edición de odontólogos y franjas por `admin` con sus validaciones y el `403` para `receptionist`.
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: **Completada** (commit `feat(db): garantizar integridad de reservas y aprobación atómica`; hash en `git log`)
@@ -110,19 +120,19 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 
 ### Ciclo 2 (IA-02) — Solicitudes, reservas y aprobación
 
-- Estado: Pendiente
+- Estado: **En curso** (T-07 y T-09A completadas; T-08, reserva telefónica, en desarrollo y todavía sin commit)
 - Tarea del plan: T-07, T-08 y T-09A (solicitud pública, reserva telefónica, aprobación/rechazo, validaciones, idempotencia y permisos por rol)
-- Objetivo:
-- Prompt utilizado:
-- Archivos creados o modificados:
-- Resultado generado por Claude Code:
-- Revisión humana:
-- Pruebas ejecutadas:
-- Resultado de las pruebas:
-- Errores identificados:
-- Correcciones realizadas:
-- Commit de Git:
-- Aprendizaje obtenido:
+- Objetivo: flujo paciente solicita → personal revisa → aprueba o rechaza → cita confirmada, sin duplicar en el frontend las reglas de la función `approve_appointment_request`.
+- Prompt utilizado: "Implementar solicitudes públicas y aprobación de citas" (restricciones: sin Google Calendar ni recordatorios, sin tocar T-03 ni sus migraciones, sin commit ni push, sin ampliar el alcance).
+- Archivos creados o modificados (parte pública y aprobación): `supabase/migrations/20261123010000_public_requests.sql`, `shared/request-validation.ts`, `api/_lib/{http,requests-service,supabase-rest}.ts`, `api/public/appointment-requests.ts`, `api/admin/appointment-requests/*`, `api/admin/appointments.ts`, `src/pages/{AvailabilityPage,RequestsPanel,AdminDashboard}.tsx`, `src/lib/{adminApi,availabilityApi}.ts`, `tests/unit/*`, `tests/integration/t07-public-requests.test.ts`, `supabase/README.md`, `.env.example`.
+- Resultado generado por Claude Code: tres funciones SQL (límite persistente por IP anonimizada, alta idempotente de solicitud con tope de 3 pendientes por correo, rechazo auditado); endpoints público y administrativos con permisos validados en servidor; formulario con número de solicitud y panel de aprobación con avisos de resultado y conflicto.
+- Revisión humana: el responsable aplicó la migración en DentalFlow Desarrollo y **validó manualmente el flujo completo**: el paciente crea una solicitud que queda registrada en Supabase, la recepcionista la aprueba, la cita confirmada aparece en el dashboard y el horario ocupado desaparece de la disponibilidad pública.
+- Pruebas ejecutadas: 139 pruebas unitarias (solicitud válida, datos inválidos, repetidas/idempotentes, aprobación, rechazo, conflicto de horario, acceso no autorizado 401/403, aprobación repetida sin duplicar); 31 comprobaciones de la migración en Postgres local (PGlite); `vercel dev` con las rutas administrativas respondiendo 401 sin sesión.
+- Resultado de las pruebas: todas aprobadas. `npm run test:t07` (integración con concurrencia real contra DentalFlow-Test) fue preparado y **no se ha ejecutado**.
+- Errores identificados: (1) el límite de uso vive en el esquema `private`, que la Data API no expone, por lo que hizo falta una migración con funciones; (2) el código HTTP del tope de pendientes por correo no estaba definido en `spec.md` (se propuso 429 `RATE_LIMITED`).
+- Correcciones realizadas: (1) migración nueva sin tocar las anteriores; (2) decisión documentada, pendiente de confirmación del responsable.
+- Commit de Git: `feat(requests): implementar disponibilidad, solicitudes públicas y aprobación de citas` (hash: ver `git log`; la parte de reserva telefónica se registrará en su propio commit).
+- Aprendizaje obtenido: delegar la decisión en funciones transaccionales de PostgreSQL y traducir sus códigos de error en el backend mantiene las reglas en un solo lugar y hace verificables la idempotencia y los conflictos.
 
 ### Ciclo 3 (IA-03) — Integración Google Calendar y validación
 

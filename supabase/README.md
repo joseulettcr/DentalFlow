@@ -65,6 +65,31 @@ Comprobación manual sugerida:
 | Cerrar sesión | Vuelve a `/login`; `/admin/citas` ya no abre |
 | `curl localhost:3000/api/admin/me` sin token | `401 UNAUTHENTICATED` |
 
+## Solicitudes públicas y aprobación (migración `20261123010000_public_requests.sql`)
+
+**Estado: escrita y validada en un Postgres local en memoria (31 comprobaciones); todavía NO aplicada a Supabase Cloud.** Solo agrega funciones; no modifica las migraciones 1 a 6.
+
+| Función (solo `service_role`) | Propósito |
+|---|---|
+| `register_booking_attempt(key_hash)` | Límite persistente de 10 intentos por clave anonimizada cada 10 minutos (usa `private.booking_rate_limits`, que la Data API no expone) |
+| `create_appointment_request(...)` | Alta atómica e idempotente de una solicitud `pending`: clave repetida con los mismos datos devuelve la misma; con datos distintos `IDEMPOTENCY_KEY_REUSED`; tope de 3 pendientes por correo (`RATE_LIMITED`); bloque con cita confirmada `SLOT_UNAVAILABLE` |
+| `reject_appointment_request(id, actor, reason)` | Rechazo atómico y auditado; repetir es idempotente; una solicitud aprobada da `REQUEST_ALREADY_DECIDED` |
+
+La aprobación sigue siendo `approve_appointment_request` (T-03). El backend nunca duplica sus reglas: solo la llama por RPC y traduce el código (`SLOT_UNAVAILABLE`, `REQUEST_EXPIRED`, `REQUEST_ALREADY_DECIDED` → 409, `NOT_FOUND` → 404). El límite por correo responde `429 RATE_LIMITED` (decisión propuesta; `spec.md` no fija el código).
+
+### Aplicar y probar (primero DentalFlow-Test, con autorización)
+1. `supabase db push --dry-run` debe listar solo `20261123010000`; luego `supabase db push`.
+2. Opcional: `npm run test:t07` (requiere `SUPABASE_DB_URL` de **pruebas**; usa datos ficticios y los elimina).
+3. Opcional en `.env.local`: `RATE_LIMIT_SALT=<texto aleatorio>` (clave del HMAC de la IP; si falta se usa una derivada de la clave de servicio).
+
+### Demostración en el navegador (`npm run dev`, proyecto con la migración aplicada)
+1. Abre `/disponibilidad`, elige un odontólogo y una fecha de lunes a viernes dentro de 30 días, y pulsa un horario.
+2. Completa nombre, correo (`@example.com`) y teléfono opcional y envía. Debe aparecer "Solicitud recibida", el **número de solicitud** y la aclaración de que aún no es una cita confirmada. El horario sigue apareciendo libre al volver a consultarlo.
+3. Reenviar el mismo formulario sin cambios devuelve la misma solicitud (no crea otra).
+4. Inicia sesión como `receptionist` o `admin`; en `/admin/citas`, "Solicitudes pendientes" muestra la solicitud. Pulsa **Aprobar**: aparece el aviso verde y la cita en "Citas confirmadas próximas"; la solicitud desaparece de pendientes.
+5. Conflicto: haz dos solicitudes del mismo horario (con correos distintos), aprueba una y luego la otra: la segunda muestra "el horario ya está ocupado" y sigue pendiente; recházala con **Rechazar**.
+6. Vuelve a `/disponibilidad`: el horario aprobado ya no aparece.
+
 ## Modelo de acceso (RLS)
 
 | Rol de base de datos | Acceso |

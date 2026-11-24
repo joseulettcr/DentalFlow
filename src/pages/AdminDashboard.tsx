@@ -1,5 +1,6 @@
 import { useAuth } from '../auth/useAuth'
 import { ALL_PERMISSIONS, PERMISSIONS } from '../../shared/permissions'
+import { RequestsPanel } from './RequestsPanel'
 
 const ROLE_LABEL = { admin: 'Administrador', receptionist: 'Recepción' } as const
 
@@ -40,7 +41,7 @@ export function AdminDashboard() {
 
   return (
     <main className="app-shell">
-      <section aria-labelledby="dashboard-title" className="welcome-card">
+      <section aria-labelledby="dashboard-title" className="welcome-card wide">
         <p className="eyebrow">Panel administrativo</p>
         <h1 id="dashboard-title" className="page-title">Hola, {profile.displayName || 'equipo'}</h1>
         <p className="lead">Rol: <strong>{ROLE_LABEL[profile.role]}</strong></p>
@@ -53,7 +54,7 @@ export function AdminDashboard() {
             </li>
           ))}
         </ul>
-        <p className="lead small">Las secciones funcionales se habilitan en las siguientes tareas.</p>
+        <RequestsPanel canDecide={allowed.has('requests.decide')} canReadAppointments={allowed.has('appointments.read')} />
         <button type="button" onClick={() => void signOut()}>Cerrar sesión</button>
       </section>
     </main>
