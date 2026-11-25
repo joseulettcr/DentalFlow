@@ -4,23 +4,9 @@ import { resolveGuard } from './auth/guard'
 import { useAuth } from './auth/useAuth'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { AvailabilityPage } from './pages/AvailabilityPage'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { navigate, usePathname } from './router'
-
-function Welcome() {
-  return (
-    <main className="app-shell">
-      <section aria-labelledby="app-title" className="welcome-card">
-        <p className="eyebrow">Gestión de citas odontológicas</p>
-        <h1 id="app-title">DentalFlow</h1>
-        <p>
-          La estructura técnica inicial está lista. Las funcionalidades de agenda se incorporarán en las tareas siguientes.
-        </p>
-        <button type="button" onClick={() => navigate('/disponibilidad')}>Ver disponibilidad</button>
-      </section>
-    </main>
-  )
-}
 
 function Loading() {
   return (
@@ -43,7 +29,7 @@ function Routes() {
   if (pathname === '/login') return <LoginPage />
   if (pathname === '/disponibilidad') return <AvailabilityPage />
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return <AdminDashboard />
-  return <Welcome />
+  return <LandingPage />
 }
 
 function App() {
