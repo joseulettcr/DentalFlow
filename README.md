@@ -47,7 +47,7 @@ No se requiere Docker ni Supabase local.
 |---|---|---|
 | Login, roles y rutas protegidas | Sí | Sí (`admin` y `receptionist`) |
 | Disponibilidad, solicitud pública y aprobación | Sí | Sí |
-| Landing pública (`/`) | Sí (render, contenido y enlaces) | **No** (pendiente en el navegador) |
+| Landing pública (`/`) | Sí (render, contenido y enlaces) | Revisada por el responsable |
 | Cita telefónica | Sí | Sí |
 | Dashboard y navegación por roles | Sí | Sí |
 | Cancelación de citas | Sí | Sí |

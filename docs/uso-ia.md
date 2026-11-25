@@ -133,16 +133,16 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 
 ### 3.8 Iteración LP — Landing page pública (RF-11; no cuenta como ciclo IA-01 a IA-03)
 
-- Estado: **En desarrollo en la rama `feature/landing-page`** (sin fusionar a `main`; sin validación manual en navegador)
+- Estado: **Completada y fusionada a `main`** (commit `2e4aee8`, merge `69e1a5b`); revisada por el responsable
 - Tarea del plan: T-LP
 - Objetivo: convertir `/` en una landing llamativa de la Clínica Dental Flow con tarjetas de servicios, contacto ficticio (Oreamuno de Cartago, teléfono 2500 0002, correo ficticio), el formulario de solicitud sin login y el acceso al sitio administrativo, sin cambiar reglas de negocio ni APIs.
 - Prompt utilizado: solicitud del responsable de crear una rama desde `main`, actualizar `intent.md`, `spec.md` y `plan.md` (v0.3, RF-11, P-17, T-LP) e implementar la landing.
 - Archivos: `intent.md`, `spec.md`, `plan.md`, `index.html`, `src/pages/LandingPage.tsx`, `src/landing/{content.ts,icons.tsx}`, `src/pages/AvailabilityPage.tsx` (prop `embedded`; mismo flujo), `src/App.tsx`, `src/styles.css`, `tests/unit/landing.test.ts`, `README.md`, `docs/demo.md`.
 - Resultado generado por Claude Code: landing con identidad propia (azul tinta, aguamarina y coral; ilustración de un diente; tipografías Outfit y Nunito Sans con alternativa del sistema), seis tarjetas de servicios ilustrativos sin precios, pasos "cómo funciona", formulario incrustado que reutiliza `AvailabilityPage` y enlaces a `/login`.
 - Pruebas ejecutadas y resultados: 205 pruebas unitarias aprobadas (11 nuevas: contenido y contacto ficticio, coherencia del horario con el seed, sin precios, menú con secciones existentes, formulario solo con APIs públicas, `/disponibilidad` conservada y render real del componente con `react-dom/server`); `lint`, `typecheck` y `build` sin errores; las rutas `/`, `/disponibilidad`, `/login` y `/admin` responden 200 en el servidor de desarrollo.
-- Revisión humana: **pendiente** (apariencia, textos y comportamiento en navegador).
+- Revisión humana: el responsable revisó la landing (apariencia, textos y comportamiento) y aprobó la fusión a `main`.
 - Límites conocidos: no hay captura de pantalla ni prueba visual automatizada (no hay navegador disponible en el entorno de desarrollo); las tipografías se cargan desde Google Fonts y, sin conexión, se usan las del sistema.
-- Commit de Git: ver `git log` de la rama `feature/landing-page`.
+- Commit de Git: `2e4aee8`; fusión a `main`: `69e1a5b`.
 
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
