@@ -60,7 +60,7 @@ export function AdminDashboard() {
         screen = <RequestsPage />
         break
       case '/admin/citas':
-        screen = <AppointmentsPage />
+        screen = <AppointmentsPage canManage={profile.permissions.includes('appointments.cancel_complete')} />
         break
       case '/admin/odontologos':
         screen = <PendingFeaturePage title="Odontólogos" description="La administración de odontólogos y horarios todavía no está habilitada (tarea T-05 en curso)." />

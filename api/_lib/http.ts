@@ -24,8 +24,10 @@ export function mapDomainError(error: { code: string; message: string }): Failur
       return failure(409, 'REQUEST_ALREADY_DECIDED', 'La solicitud ya fue decidida.')
     case 'REQUEST_EXPIRED':
       return failure(409, 'REQUEST_EXPIRED', 'El horario solicitado ya pasó.')
+    case 'INVALID_TRANSITION':
+      return failure(409, 'INVALID_TRANSITION', 'La cita no está en un estado que permita esta acción.')
     case 'NOT_FOUND':
-      return failure(404, 'NOT_FOUND', 'No se encontró la solicitud.')
+      return failure(404, 'NOT_FOUND', 'No se encontró el registro.')
     case 'VALIDATION_ERROR':
       return failure(422, 'VALIDATION_ERROR', 'Los datos enviados no son válidos.')
     case 'RATE_LIMITED':

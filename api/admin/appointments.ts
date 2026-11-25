@@ -1,13 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { guarded, sendJsonError, sendOutcome, failure } from '../_lib/http.js'
 import { createPhoneAppointment } from '../_lib/phone-booking-service.js'
-import { listUpcomingAppointments } from '../_lib/requests-service.js'
+import { listCompletableAppointments, listUpcomingAppointments } from '../_lib/requests-service.js'
 import { withStaff } from '../_lib/staff-auth.js'
 import { createRestGet, createRpc } from '../_lib/supabase-rest.js'
 
-/** GET: citas confirmadas próximas (permiso `appointments.read`). */
-const list = withStaff('appointments.read', async (_request: VercelRequest, response: VercelResponse) => {
-  await guarded(response, async () => sendOutcome(response, await listUpcomingAppointments(createRestGet(), new Date())))
+const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? ''
+
+/**
+ * GET: citas confirmadas (permiso `appointments.read`). Sin parámetros: las próximas (comportamiento original).
+ * `?scope=completable`: confirmadas cuya hora de fin ya pasó (candidatas a completar).
+ */
+const list = withStaff('appointments.read', async (request: VercelRequest, response: VercelResponse) => {
+  const scope = first(request.query.scope)
+  if (scope !== '' && scope !== 'upcoming' && scope !== 'completable') {
+    return sendJsonError(response, failure(422, 'VALIDATION_ERROR', 'El parámetro scope debe ser upcoming o completable.'))
+  }
+  await guarded(response, async () =>
+    sendOutcome(response, scope === 'completable'
+      ? await listCompletableAppointments(createRestGet(), new Date())
+      : await listUpcomingAppointments(createRestGet(), new Date())),
+  )
 })
 
 /** POST: reserva telefónica directa, confirmada de inmediato (permiso `appointments.create_phone`). El permiso se exige por método. */

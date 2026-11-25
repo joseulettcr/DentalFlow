@@ -221,3 +221,29 @@ export async function rejectRequest(
   const row = (result.data as Array<{ request_status: string; already_rejected: boolean }>)[0]
   return { ok: true, status: 200, body: { requestStatus: 'rejected', alreadyRejected: row.already_rejected } }
 }
+
+/**
+ * Citas confirmadas cuya hora de fin ya pasó: son las que el personal puede marcar como completadas (CA-05c).
+ * Complementa listUpcomingAppointments; mismo formato de respuesta.
+ */
+export async function listCompletableAppointments(rest: RestGet, now: Date): Promise<Outcome<{ appointments: AppointmentListItem[] }>> {
+  const rows = (await rest(
+    `appointments?select=id,patient_name,patient_email,starts_at,ends_at,status,source,doctors(full_name)&status=eq.confirmed&ends_at=lte.${now.toISOString()}&order=starts_at.desc&limit=50`,
+  )) as Array<{ id: string; patient_name: string; patient_email: string; starts_at: string; ends_at: string; status: string; source: string; doctors?: { full_name?: string } | null }>
+  return {
+    ok: true,
+    status: 200,
+    body: {
+      appointments: rows.map((a) => ({
+        id: a.id,
+        doctorName: a.doctors?.full_name ?? '',
+        patientName: a.patient_name,
+        patientEmail: a.patient_email,
+        startsAt: iso(a.starts_at),
+        endsAt: iso(a.ends_at),
+        status: a.status,
+        source: a.source,
+      })),
+    },
+  }
+}

@@ -110,6 +110,35 @@ La aprobación sigue siendo `approve_appointment_request` (T-03). El backend nun
 5. Una solicitud pública pendiente de ese mismo horario sigue existiendo; al aprobarla muestra "el horario ya está ocupado".
 6. Sin sesión, `curl -X POST localhost:3000/api/admin/appointments` responde `401`.
 
+## Cancelar y completar citas (migración `20261124000000_appointment_status.sql`)
+
+**Estado: escrita y validada en un Postgres local en memoria (21 comprobaciones); todavía NO aplicada a Supabase Cloud.** Solo agrega una función; no modifica las migraciones 1 a 8.
+
+**Por qué hace falta una migración:** el cambio de estado y su registro en `appointment_audit` deben ser una sola transacción, y la fila se bloquea (`FOR UPDATE`) para que dos operaciones simultáneas sobre la misma cita se serialicen. Un `UPDATE` desde el backend no da esas garantías.
+
+`public.change_appointment_status(cita, acción, actor)` (solo `service_role`):
+
+| Acción | Permitida desde | Resultado | Si no |
+|---|---|---|---|
+| `cancel` | `confirmed` | `cancelled` (`cancelled_at`, `cancelled_by`), libera el bloque (`appointments_no_overlap` solo cubre `confirmed`) | `completed` → `INVALID_TRANSITION` |
+| `complete` | `confirmed` **y ya terminada** | `completed` (`completed_at`, `completed_by`) | cancelada o aún no terminada → `INVALID_TRANSITION` |
+
+Repetir la misma acción sobre el estado ya alcanzado es idempotente (200, `alreadyInState: true`, sin nueva auditoría). Cita inexistente → `NOT_FOUND` (404); acción inválida → `VALIDATION_ERROR` (422). Cancelar una cita confirmada cuya hora ya pasó está permitido (no se realizó).
+
+API: `PATCH /api/admin/appointments/:id` con `{ "action": "cancel" | "complete" }` (permiso `appointments.cancel_complete`, validado en el servidor). `GET /api/admin/appointments` conserva su comportamiento y acepta el parámetro opcional `?scope=completable` (confirmadas ya terminadas, candidatas a completar).
+
+### Aplicar y probar (primero DentalFlow-Test, con autorización)
+1. `supabase db push --dry-run` debe listar solo `20261124000000`; luego `supabase db push`.
+2. Opcional: `npm run test:t09` (requiere `SUPABASE_DB_URL` de **pruebas**, y las migraciones 8 y 9; datos ficticios que se eliminan; incluye 5 cancelaciones simultáneas y la carrera cancelar contra completar).
+
+### Validación manual en el navegador (proyecto con la migración aplicada)
+1. Crea en `/admin/nueva-cita` una cita futura (por ejemplo, de mañana).
+2. En `/admin/citas`, sección **Próximas citas**, pulsa **Cancelar**: aparece la confirmación "¿Cancelar la cita de …?"; pulsa **No, volver** (no pasa nada) y luego **Cancelar** otra vez y **Sí, cancelar cita**. Debe aparecer el aviso verde y la cita desaparecer de la lista.
+3. En `/disponibilidad` (o en Nueva cita) el horario cancelado vuelve a aparecer libre y se puede reservar de nuevo.
+4. **Completar:** solo aplica a citas que ya terminaron, que la interfaz muestra en **Por cerrar (ya terminaron)**. Para probarlo sin esperar, en el SQL Editor de **pruebas** (no en Desarrollo) inserta una cita confirmada con fecha pasada o ajusta temporalmente una de prueba; luego pulsa **Completar** y comprueba que desaparece de la lista.
+5. Verifica la auditoría: `select action, from_status, to_status, actor_user_id, occurred_at from public.appointment_audit order by occurred_at desc limit 5;` debe mostrar `cancelled` o `completed` con el actor.
+6. Sin sesión, `curl -X PATCH localhost:3000/api/admin/appointments/<id>` responde `401`.
+
 ## Modelo de acceso (RLS)
 
 | Rol de base de datos | Acceso |

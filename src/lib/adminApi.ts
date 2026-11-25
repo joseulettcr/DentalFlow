@@ -82,3 +82,16 @@ export const createPhoneAppointment = (payload: PhoneAppointmentPayload) =>
     method: 'POST',
     body: JSON.stringify({ ...payload, patientPhone: payload.patientPhone.trim() === '' ? undefined : payload.patientPhone }),
   })
+
+/** Confirmadas cuya hora de fin ya pasó: candidatas a marcarse como completadas. */
+export const listCompletableAppointments = () =>
+  adminFetch<{ appointments: AppointmentItem[] }>('/api/admin/appointments?scope=completable')
+
+export type StatusAction = 'cancel' | 'complete'
+
+/** Cancela o completa una cita. Las transiciones y la auditoría las decide el servidor (PostgreSQL). */
+export const changeAppointmentStatus = (id: string, action: StatusAction) =>
+  adminFetch<{ appointmentId: string; status: 'cancelled' | 'completed'; alreadyInState: boolean }>(`/api/admin/appointments/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ action }),
+  })

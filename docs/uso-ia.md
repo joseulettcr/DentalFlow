@@ -115,6 +115,22 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Límites conocidos: no hay pruebas de renderizado de componentes (no se agregó jsdom); el comportamiento visual se validó manualmente.
 - Aprendizaje obtenido: mover la decisión de qué mostrar a un mapa de rutas puro permite probar el acceso por rol sin renderizar, y mantener la autorización real en el backend evita que la navegación sea una barrera de seguridad.
 
+### 3.7 Iteración T-09 (parcial) — Cancelar y completar citas (no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **En curso** (cancelación implementada y validada manualmente; finalización implementada y probada solo de forma automatizada; filtros e historial pendientes)
+- Tarea del plan: T-09 (parte de gestión del estado de las citas)
+- Objetivo: permitir que `admin` y `receptionist` cancelen o completen citas desde `/admin/citas`, con transiciones válidas según `spec.md` (CA-05b, CA-05c, RB-06), auditoría atómica y control de operaciones repetidas.
+- Prompt utilizado: "Cierre T-UI y gestión de citas" (restricciones: reutilizar esquema y permisos, migración nueva sin aplicar si hacía falta, sin pruebas destructivas en Desarrollo, sin Google Calendar ni recordatorios, sin commit ni push durante la iteración).
+- Archivos: `supabase/migrations/20261124000000_appointment_status.sql`, `api/_lib/appointment-status-service.ts`, `api/admin/appointments/[id].ts`, `api/admin/appointments.ts` (parámetro opcional `?scope=completable`), `api/_lib/{http,requests-service}.ts`, `src/lib/adminApi.ts`, `src/pages/admin/AppointmentsPage.tsx`, `src/pages/AdminDashboard.tsx`, `tests/unit/appointment-status.test.ts`, `tests/integration/t09-appointment-status.test.ts`, `supabase/README.md`, `package.json`.
+- Resultado generado por Claude Code: función SQL `change_appointment_status` (fila bloqueada, transición validada contra el estado real, auditoría en la misma transacción, repetición idempotente, `INVALID_TRANSITION`/`NOT_FOUND`/`VALIDATION_ERROR` como códigos estables), endpoint `PATCH` con permiso `appointments.cancel_complete` exigido en el servidor, y la pantalla Citas con las secciones "Próximas citas" y "Por cerrar (ya terminaron)", confirmación en línea antes de cancelar y mensajes de resultado.
+- Revisión humana: el responsable validó manualmente en DentalFlow Desarrollo **la cancelación**: permite desistir de la cancelación, cambia el estado a `cancelled`, registra la auditoría y libera el horario para nuevas reservas. **La finalización de citas no ha sido validada manualmente.**
+- Pruebas ejecutadas y resultados: 193 pruebas unitarias aprobadas (cancelación, finalización, transiciones inválidas, operación repetida, 401/403/404/422, el backend no llama a la base de datos sin permiso); 21 comprobaciones de la migración en Postgres local (PGlite): persistencia, auditoría con actor y estados, repetición sin auditoría extra, liberación del bloque y roles `anon`/`authenticated` sin acceso; `lint`, `typecheck` y `build`; el servidor de desarrollo respondió 401 sin sesión a `PATCH` y `GET ?scope=completable`.
+- Resultado de las pruebas: todas aprobadas. `npm run test:t09` (integración con concurrencia real contra Supabase de pruebas) fue preparado y **no se ha ejecutado**; la concurrencia de esta función queda cubierta solo por el bloqueo de fila (`FOR UPDATE`) y por la validación manual de la cancelación.
+- Errores identificados: (1) `vercel dev` pidió volver a iniciar sesión en Vercel (credenciales vencidas) durante las pruebas locales, lo que impidió levantar un servidor nuevo; se usó un servidor ya abierto que recompila `api/`; (2) `spec.md` no define si repetir una cancelación es un error o una operación idempotente.
+- Correcciones realizadas: (1) sin cambios de código; la sesión de Vercel debe renovarse (`vercel login`); (2) se eligió idempotencia (200 con `alreadyInState`), coherente con aprobar y rechazar solicitudes; pendiente de confirmación formal.
+- Límites conocidos: no hay filtros por fecha y odontólogo ni historial de citas canceladas o completadas; el listado "por cerrar" y la acción Completar requieren una cita ya terminada, por lo que su prueba manual necesita datos preparados en el entorno de pruebas.
+- Commit de Git: `feat(appointments): gestionar estados de citas (cancelar y completar)` (hash: ver `git log`).
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: **Completada** (commit `feat(db): garantizar integridad de reservas y aprobación atómica`; hash en `git log`)
