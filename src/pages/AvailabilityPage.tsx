@@ -31,7 +31,7 @@ function scheduleSummary(doctor: DoctorOption): string[] {
 }
 
 /** Consulta de disponibilidad (T-05/T-06). Solo lectura: no crea solicitudes ni citas. */
-export function AvailabilityPage() {
+export function AvailabilityPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [doctorsState, setDoctorsState] = useState<DoctorsState>({ status: 'loading' })
   const [doctorId, setDoctorId] = useState('')
   const [date, setDate] = useState('')
@@ -135,12 +135,17 @@ export function AvailabilityPage() {
 
   const selected = doctorsState.status === 'ready' ? doctorsState.doctors.find((d) => d.id === doctorId) : undefined
 
-  return (
-    <main className="app-shell">
-      <section aria-labelledby="availability-title" className="welcome-card">
-        <p className="eyebrow">Consulta de horarios</p>
-        <h1 id="availability-title" className="page-title">Disponibilidad</h1>
-        <p className="lead">Elige un odontólogo y una fecha para ver los horarios libres (bloques de 30 minutos, hora de Costa Rica) y envía tu solicitud de cita.</p>
+  const body = (
+    <>
+        {embedded ? (
+          <p className="lead">Elige un odontólogo y una fecha para ver los horarios libres (bloques de 30 minutos, hora de Costa Rica) y envía tu solicitud de cita.</p>
+        ) : (
+          <>
+            <p className="eyebrow">Consulta de horarios</p>
+            <h1 id="availability-title" className="page-title">Disponibilidad</h1>
+            <p className="lead">Elige un odontólogo y una fecha para ver los horarios libres (bloques de 30 minutos, hora de Costa Rica) y envía tu solicitud de cita.</p>
+          </>
+        )}
 
         {doctorsState.status === 'loading' && <p role="status" className="notice">Cargando odontólogos…</p>}
         {doctorsState.status === 'error' && (
@@ -238,7 +243,17 @@ export function AvailabilityPage() {
           </div>
         )}
 
-        <button type="button" className="secondary" onClick={() => navigate('/')}>Volver al inicio</button>
+        {!embedded && <button type="button" className="secondary" onClick={() => navigate('/')}>Volver al inicio</button>}
+    </>
+  )
+
+  // Incrustada en la landing (RF-11) comparte exactamente el mismo flujo; solo cambia el contenedor.
+  if (embedded) return <div className="booking-embed">{body}</div>
+
+  return (
+    <main className="app-shell">
+      <section aria-labelledby="availability-title" className="welcome-card">
+        {body}
       </section>
     </main>
   )

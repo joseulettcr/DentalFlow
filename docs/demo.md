@@ -29,10 +29,10 @@
 
 **Lista de comprobación (15 minutos antes):**
 
-- [ ] `npm run dev` responde y `/disponibilidad` carga odontólogos.
+- [ ] `npm run dev` responde y la landing (`/`) carga odontólogos en la sección de solicitud.
 - [ ] Inicio de sesión con `recepcion.demo` y con `admin.demo` funciona; no hay solicitudes pendientes ni citas del ensayo en los horarios elegidos.
 - [ ] Una terminal lista con `npm test` (no necesita red) en el directorio del proyecto.
-- [ ] Pestañas abiertas: `/disponibilidad`, `/login`; archivos `intent.md`, `spec.md`, `plan.md` y `docs/uso-ia.md` a mano.
+- [ ] Pestañas abiertas: `/` (landing), `/login`; archivos `intent.md`, `spec.md`, `plan.md` y `docs/uso-ia.md` a mano.
 - [ ] Capturas o video corto de un ensayo exitoso, guardados fuera de la red (ver contingencias).
 
 ## 2. Cronograma
@@ -57,7 +57,7 @@
 **Decir:** "El navegador solo usa la clave pública. Las funciones de Vercel son el único lugar con privilegios: validan la sesión, leen el rol y aplican permisos. La regla crítica, que dos citas confirmadas no se superpongan, la impone PostgreSQL con una restricción; no depende de React. Aprobar, rechazar, reservar y cancelar son funciones transaccionales: cambian el estado y la auditoría juntos y se pueden repetir sin duplicar."
 
 ### 2:30–4:30 · Solicitud pública
-1. Abrir `/disponibilidad` **sin iniciar sesión**.
+1. Abrir `/` (la **landing**) **sin iniciar sesión**: mostrar la portada, las tarjetas de servicios y el contacto ficticio; pulsar **Solicitar cita** (o bajar a esa sección). El mismo formulario existe también en `/disponibilidad`.
 2. Elegir *Dra. Ana Morales*, el día preparado; mostrar los horarios libres.
 3. Elegir 10:00 y completar el formulario con **Paciente Demo Uno**.
 4. Enviar. **Resultado esperado:** "Solicitud recibida", un **número de solicitud** y el aviso de que **todavía no es una cita confirmada**.

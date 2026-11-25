@@ -1,6 +1,6 @@
 # DentalFlow — spec.md
 
-**Versión:** 0.2 — especificación objetivo (alineamiento T-00), no implementación validada
+**Versión:** 0.3 — especificación objetivo (alineamiento T-00) más RF-11 (landing page pública, rama `feature/landing-page`); el estado real de implementación se registra en `plan.md`
 
 **Ámbito:** clínica odontológica simulada, una sede, zona horaria `America/Costa_Rica`
 
@@ -17,6 +17,7 @@
 | `POST /api/appointments` (público y personal) | Reemplazado por `POST /api/public/appointment-requests` (público) y `POST /api/admin/appointments` (reserva telefónica). |
 | RF-04 | Ahora es la **reserva telefónica directa** por personal. La reserva pública pasa a RF-08 (solicitud) y RF-09 (aprobación). |
 | Nuevos | RF-08, RF-09, RF-10; RB-11, RB-12, RB-13; CA-06f, CA-06g; P-11 a P-16. |
+| v0.3 | **RF-11** (landing page pública en `/`) y **P-17**. La ruta `/` deja de ser una portada técnica y pasa a ser la landing; `/disponibilidad` se conserva. No se agregan endpoints, tablas ni reglas de negocio. |
 | Datos | Nuevas `appointment_requests`, `appointment_audit`, `private.oauth_states`; columnas nuevas en `appointments`. |
 | Códigos HTTP | Validación = `422` siempre; conflictos de estado = `409`. |
 | Entorno | `supabase db reset/start/test db` (requieren Docker) reemplazados por migraciones sobre Supabase Cloud y pruebas de integración. |
@@ -180,6 +181,19 @@ Regla de autorización: un usuario autenticado cuya cuenta no tenga fila en `sta
 - **CA-10b:** si Supabase no responde dentro del tiempo límite, las operaciones que requieren persistencia responden `503 SERVICE_UNAVAILABLE`, el formulario público muestra un aviso y deshabilita el envío, y nunca se confirma una cita o solicitud que no se haya guardado.
 - **CA-10c:** si Google falla o no está conectado, las reservas y aprobaciones continúan, las citas confirmadas no se eliminan y el personal ve el estado de sincronización `pending/failed` con opción de reintento.
 - **CA-10d:** `GET /api/admin/system-status` (personal) detalla el estado por componente; ninguna respuesta incluye tokens, claves, trazas ni URLs de conexión.
+
+### RF-11 — Landing page pública (nuevo, v0.3)
+
+**Comportamiento:** la ruta `/` es la portada pública de la **Clínica Dental Flow** (clínica simulada, Oreamuno de Cartago). Presenta la clínica, sus servicios y su contacto, incluye el formulario para solicitar una cita sin iniciar sesión y ofrece un acceso visible al sitio administrativo. Es una capa de presentación sobre RF-03 y RF-08: **no agrega reglas de negocio, endpoints ni tablas**.
+
+- **CA-11a:** una persona sin sesión abre `/` y ve, sin navegar a otra página: la presentación de la clínica, las **tarjetas de servicios**, el **formulario de solicitud**, los **datos de contacto** y el acceso del personal.
+- **CA-11b:** el formulario de la landing usa únicamente las APIs públicas existentes (`GET /api/public/doctors`, `GET /api/public/slots`, `POST /api/public/appointment-requests`) y cumple íntegramente RF-03 y RF-08: horarios libres de 30 minutos, validaciones, idempotencia y límites. Al enviar, muestra el **número de solicitud** y aclara que **todavía no es una cita confirmada**.
+- **CA-11c:** el acceso del personal (botón en el encabezado y en el pie) lleva a `/login`; con sesión válida, `/login` redirige al panel. La landing no muestra datos del personal, de pacientes ni rutas internas, y `/admin/*` sigue protegido según RF-01.
+- **CA-11d:** los datos de contacto son **ficticios** y están identificados como tales: ubicación Oreamuno de Cartago, Costa Rica; teléfono 2500 0002; correo de dominio reservado (`info@dentalflow.example`); horario general lunes a viernes de 8:00 a 17:00, coherente con los horarios sembrados. El pie declara que la clínica es simulada.
+- **CA-11e:** los servicios se muestran como **tarjetas informativas** (nombre, descripción breve e ícono). No incluyen precios ni promesas de disponibilidad por servicio; la disponibilidad real proviene solo de odontólogos y horarios (RF-02, RF-03).
+- **CA-11f:** la página se usa sin desplazamiento horizontal desde 320 px de ancho, se puede recorrer con teclado (foco visible, enlace para saltar al contenido), respeta la preferencia de movimiento reducido y mantiene contraste legible.
+- **CA-11g:** `/disponibilidad` sigue funcionando como página independiente con el mismo comportamiento validado.
+- **CA-11h:** si las APIs públicas no están disponibles, la sección del formulario muestra un aviso con opción de reintentar y el resto de la landing (servicios y contacto) sigue visible.
 
 ## 4. Reglas de negocio (RB)
 
@@ -366,6 +380,7 @@ Las migraciones de `supabase/migrations/` se aplican a un proyecto Supabase Clou
 - `P-14`: matriz de roles: `receptionist` y `admin` obtienen lo permitido y `403` en lo denegado (CA-02e, desconexión Google).
 - `P-15`: desconexión y reconexión de Google; `state` expirado, reutilizado o desconocido rechazado; sin tokens en respuestas.
 - `P-16`: simulación de fallo de Supabase → `503`, ninguna escritura ni confirmación falsa; fallo de Google → citas conservadas.
+- `P-17`: landing page (RF-11): `/` responde sin sesión; contiene servicios, contacto ficticio, formulario y acceso a `/login`; el contenido de contacto coincide con CA-11d; el formulario no usa más APIs que las públicas; `/disponibilidad` y `/admin/*` conservan su comportamiento.
 
 **Criterio de salida:** todos los casos principales pasan, al menos una prueba automatizada ejecutada y documentada, `npm run lint` y `npm run typecheck` sin errores, migraciones y seed reproducibles sobre un proyecto Supabase Cloud nuevo, instalación descrita y demo ensayada. Registrar fallos encontrados, corrección humana y evidencia de tres ciclos de uso de IA.
 
@@ -378,6 +393,7 @@ Las migraciones de `supabase/migrations/` se aplican a un proyecto Supabase Clou
 - Una cuenta `admin` y una `receptionist` de demostración suministradas **por canal privado**, nunca comprometidas al repo.
 - Una cuenta personal de Google dedicada a la demo y un calendario secundario de prueba (por ejemplo, "DentalFlow Demo").
 - Pacientes y correos de prueba ficticios (dominio reservado `example.com`).
+- Contacto ficticio de la landing: Oreamuno de Cartago, Costa Rica; teléfono 2500 0002; correo `info@dentalflow.example`.
 
 **Limitaciones:** horarios semanales sin feriados/vacaciones, sin conflictos contra eventos creados directamente en Google, sin recordatorios reales, sin datos clínicos, sin pagos y sin requisitos de producción clínica completados. El paciente no recibe notificación automática ni puede consultar el estado de su solicitud: la clínica debe contactarlo por un canal manual (limitación asumida y aprobada, D-07). Las solicitudes pendientes no bloquean horarios, por lo que pueden quedar sin aprobar por conflicto.
 

@@ -32,6 +32,7 @@ No se requiere Docker ni Supabase local.
 | Área | Qué hace hoy |
 |---|---|
 | Autenticación y roles | Inicio y cierre de sesión con Supabase Auth; roles `admin` y `receptionist` desde `staff_profiles`; rutas `/admin/*` protegidas; autorización validada en el servidor (401/403/503) |
+| Landing pública | `/`: portada de la Clínica Dental Flow (clínica simulada, Oreamuno de Cartago) con tarjetas de servicios, "cómo funciona", **formulario de solicitud sin login**, contacto ficticio y botón de **acceso del personal** a `/login` (RF-11) |
 | Disponibilidad pública | `/disponibilidad`: elegir odontólogo y fecha y ver horarios libres de 30 minutos (hora de Costa Rica, ventana de 1 hora a 30 días) |
 | Solicitud pública | Formulario sin login que crea una solicitud `pending` con número de solicitud; idempotencia, tope de 3 pendientes por correo y límite de 10 intentos por IP (anonimizada) en 10 minutos. No crea cita ni bloquea el horario |
 | Solicitudes (personal) | `/admin/solicitudes`: aprobar (crea una cita confirmada, sin duplicados, aunque se repita o compita) o rechazar con motivo opcional; el conflicto de horario se informa y la solicitud sigue pendiente |
@@ -46,6 +47,7 @@ No se requiere Docker ni Supabase local.
 |---|---|---|
 | Login, roles y rutas protegidas | Sí | Sí (`admin` y `receptionist`) |
 | Disponibilidad, solicitud pública y aprobación | Sí | Sí |
+| Landing pública (`/`) | Sí (render, contenido y enlaces) | **No** (pendiente en el navegador) |
 | Cita telefónica | Sí | Sí |
 | Dashboard y navegación por roles | Sí | Sí |
 | Cancelación de citas | Sí | Sí |
@@ -87,7 +89,7 @@ npm run dev            # interfaz + funciones (vercel dev) → http://localhost:
 npm run dev:frontend   # solo la interfaz (las APIs no responden)
 ```
 
-Rutas: `/` · `/disponibilidad` (pública) · `/login` · `/admin`, `/admin/nueva-cita`, `/admin/solicitudes`, `/admin/citas`, `/admin/odontologos` y `/admin/configuracion` (personal).
+Rutas: `/` (landing pública) · `/disponibilidad` (pública) · `/login` · `/admin`, `/admin/nueva-cita`, `/admin/solicitudes`, `/admin/citas`, `/admin/odontologos` y `/admin/configuracion` (personal).
 
 ### Variables de entorno (archivo `.env.local`, ignorado por Git)
 

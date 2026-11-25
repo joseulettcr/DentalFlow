@@ -1,6 +1,6 @@
 # DentalFlow — intent.md
 
-**Versión:** 0.2 (alineamiento documental T-00; pendiente de revisión humana y de validación mediante desarrollo y pruebas)
+**Versión:** 0.3 (v0.2 de alineamiento documental T-00 más la landing page pública, rama `feature/landing-page`, 2026-11-24)
 
 **Proyecto:** DentalFlow — Gestión de citas para una clínica odontológica
 
@@ -14,7 +14,7 @@
 
 DentalFlow se propone para una clínica odontológica ficticia con varios profesionales. Se distinguen:
 
-- **Paciente:** consulta horarios disponibles y **envía una solicitud de cita** mediante un formulario público, sin crear una cuenta. La solicitud no es una cita: queda pendiente hasta que el personal la apruebe.
+- **Paciente:** conoce la clínica en una **landing page pública** (servicios, contacto), consulta horarios disponibles y **envía una solicitud de cita** mediante el formulario de esa misma página, sin crear una cuenta. La solicitud no es una cita: queda pendiente hasta que el personal la apruebe.
 - **Recepcionista (`receptionist`):** personal autenticado que registra citas telefónicas, aprueba o rechaza solicitudes y consulta la agenda. Sus permisos exactos están en la matriz de `spec.md` §1, aprobada mediante las decisiones D-04 y D-05 el 22 de noviembre de 2026.
 - **Administrador (`admin`):** además de lo anterior, configura odontólogos y horarios y administra la conexión con Google Calendar.
 - **Odontólogo:** es una entidad de agenda, **no** un usuario con portal propio en este MVP.
@@ -43,6 +43,7 @@ Aplicación web responsiva que permita:
 6. Conectar **de forma real** una cuenta personal de Google de demostración para crear eventos y retirar eventos de citas canceladas; sincronización **unidireccional** DentalFlow → Google Calendar, con desconexión y reconexión.
 7. Mostrar recordatorios **simulados** dentro del dashboard, sin enviar mensajes reales.
 8. Detectar fallos de servicios desde el backend y operar en **Modo Productivo** o **Modo Contingencia** (estados operativos del MVP definidos en `spec.md`; no equivalen a una certificación de preparación para producción clínica).
+9. Presentar la clínica en una **landing page pública** en la ruta `/`: portada llamativa, tarjetas de servicios, datos de contacto ficticios (Oreamuno de Cartago, teléfono 2500 0002, correo ficticio), el **formulario de solicitud de cita** (el mismo flujo sin login de RF-08) y un acceso visible al sitio administrativo (`/login`). La landing es informativa y de captación: no agrega reglas de negocio ni confirma citas.
 
 ## 4. Objetivo de negocio e indicador
 
@@ -61,7 +62,7 @@ Si la comparación no alcanza la meta, se reporta el resultado real de la prueba
 
 ## 5. Alcance comprometido del MVP (v1)
 
-- Aplicación React + TypeScript con portal público y dashboard administrativo.
+- Aplicación React + TypeScript con **landing page pública** (servicios, contacto, formulario de solicitud sin login y acceso al sitio administrativo) y dashboard administrativo.
 - Inicio y cierre de sesión del personal con Supabase Auth; dos roles (`admin`, `receptionist`); no hay registro público de personal.
 - Registro, activación/desactivación de odontólogos y configuración de franjas semanales de atención (`admin`).
 - Citas de **30 minutos**, en la zona horaria `America/Costa_Rica`. Las solicitudes públicas respetan una ventana de **1 hora a 30 días** de anticipación al momento de enviarse.
@@ -79,6 +80,7 @@ Si la comparación no alcanza la meta, se reporta el resultado real de la prueba
 
 - Expedientes médicos, diagnósticos, odontogramas o datos clínicos sensibles.
 - Pagos, facturación, aseguradoras y cotizaciones.
+- Precios, tarifas, paquetes, pagos en línea, reseñas, blog o contenido comercial real en la landing: los **servicios son ilustrativos** de una clínica simulada y no condicionan la disponibilidad, que depende solo de odontólogos y horarios.
 - Registro/login de pacientes, autogestión de cancelaciones o reprogramación por pacientes, y consulta pública del estado de una solicitud.
 - Notificación real al paciente sobre el resultado de su solicitud (sin correo, SMS ni WhatsApp). Limitación documentada: el paciente no dispone de un canal automático de respuesta (decisión D-07, aprobada).
 - Reprogramación directa de una cita: en v1 se cancela y se crea una nueva.
