@@ -33,7 +33,7 @@ export const CONTACT = {
   phoneDisplay: '2500 0002',
   phoneHref: 'tel:25000002',
   email: 'info@dentalflow.example',
-  hours: 'Lunes a viernes, de 8:00 a 17:00',
+  hours: 'Lunes a viernes, de 8:00 a 17:00 · Sábados, de 9:00 a 13:00',
 } as const
 
 /** Rutas a las que enlaza la landing: solo páginas públicas y el acceso al login del personal (CA-11c). */

@@ -1,6 +1,6 @@
 # DentalFlow — spec.md
 
-**Versión:** 0.3 — especificación objetivo (alineamiento T-00) más RF-11 (landing page pública, rama `feature/landing-page`); el estado real de implementación se registra en `plan.md`
+**Versión:** 0.4 — especificación objetivo (alineamiento T-00) más RF-11 (landing page) y la ampliación de RF-02 (administración de odontólogos y horarios, rama `feature/admin-odontologos`); el estado real de implementación se registra en `plan.md`
 
 **Ámbito:** clínica odontológica simulada, una sede, zona horaria `America/Costa_Rica`
 
@@ -17,6 +17,7 @@
 | `POST /api/appointments` (público y personal) | Reemplazado por `POST /api/public/appointment-requests` (público) y `POST /api/admin/appointments` (reserva telefónica). |
 | RF-04 | Ahora es la **reserva telefónica directa** por personal. La reserva pública pasa a RF-08 (solicitud) y RF-09 (aprobación). |
 | Nuevos | RF-08, RF-09, RF-10; RB-11, RB-12, RB-13; CA-06f, CA-06g; P-11 a P-16. |
+| v0.4 | **RF-02 ampliado**: módulo de administración de odontólogos y horarios **exclusivo de `admin`** (la recepción deja de tener la vista de solo lectura del panel; sigue viendo a los odontólogos activos en los selectores de sus formularios), horario predeterminado del proyecto (lunes a viernes 08:00–17:00, sábados 09:00–13:00), CA-02f a CA-02k, código `SCHEDULE_CONFLICT` (409) y **P-18**. |
 | v0.3 | **RF-11** (landing page pública en `/`) y **P-17**. La ruta `/` deja de ser una portada técnica y pasa a ser la landing; `/disponibilidad` se conserva. No se agregan endpoints, tablas ni reglas de negocio. |
 | Datos | Nuevas `appointment_requests`, `appointment_audit`, `private.oauth_states`; columnas nuevas en `appointments`. |
 | Códigos HTTP | Validación = `422` siempre; conflictos de estado = `409`. |
@@ -43,8 +44,8 @@ Leyenda: **✔ confirmado** por el responsable del proyecto; **✔ (aprobado D-0
 | Listar solicitudes; aprobar o rechazar | — | ✔ (personal autorizado) | ✔ |
 | Listar y consultar citas (incluye datos del paciente) | — | ✔ (aprobado D-04/D-05) | ✔ |
 | Cancelar / completar cita | — | ✔ (aprobado D-04/D-05) | ✔ |
-| Ver odontólogos y franjas (panel) | — | ✔ (aprobado D-04/D-05; solo lectura) | ✔ |
-| Crear/editar odontólogos y franjas | — | ✔ (aprobado D-04/D-05; denegado) | ✔ |
+| Ver odontólogos y franjas (panel de administración) | — | — (v0.4: módulo exclusivo de `admin`; la recepción ve a los odontólogos **activos** en los selectores de Nueva cita y Solicitudes) | ✔ |
+| Crear, editar, activar/desactivar odontólogos y editar franjas | — | — (denegado, `403`) | ✔ |
 | Conectar / desconectar / reconectar Google Calendar | — | ✔ (aprobado D-04/D-05; denegado) | ✔ |
 | Ver estado de Google y de sincronización | — | ✔ (aprobado D-04/D-05) | ✔ |
 | Reintentar sincronización de una cita | — | ✔ (aprobado D-04/D-05) | ✔ |
@@ -93,13 +94,19 @@ Regla de autorización: un usuario autenticado cuya cuenta no tenga fila en `sta
 
 ### RF-02 — Odontólogos y horarios
 
-**Comportamiento:** alta/edición de odontólogos, campo de especialidad y estado activo; configuración por día de semana de franjas de atención (por ejemplo, lunes 08:00–12:00 y 13:00–17:00). Escritura exclusiva de `admin` [P para `receptionist`: solo lectura].
+**Comportamiento:** módulo del panel (`/admin/odontologos`), **exclusivo de `admin`**, para dar de alta y editar odontólogos (nombre y especialidad), activarlos o desactivarlos y configurar por día de la semana sus franjas de atención. Todos los odontólogos usan por defecto el **horario del proyecto**: lunes a viernes de 08:00 a 17:00 y sábados de 09:00 a 13:00, con el domingo cerrado; el administrador puede ajustarlo por odontólogo (por ejemplo, partir el día en 08:00–12:00 y 13:00–17:00). Un combobox con los nombres de los odontólogos selecciona a quién editar y comparte la lista de odontólogos con los selectores de las demás pantallas.
 
 - **CA-02a:** el administrador crea a `Dra. Ana Morales` y configura lunes 08:00–12:00; ese profesional aparece como elegible en la página pública.
 - **CA-02b:** una franja con fin anterior o igual al inicio, o que se superpone con otra franja del mismo profesional/día, se rechaza con `422` y mensaje claro.
 - **CA-02c:** un odontólogo inactivo no se ofrece para nuevas solicitudes ni citas, sin eliminar el historial.
 - **CA-02d:** una edición que deje citas futuras confirmadas fuera del nuevo horario se rechaza con `409` y explica qué reservas requieren atención.
-- **CA-02e:** un usuario `receptionist` que intente crear o editar odontólogos o franjas recibe `403 FORBIDDEN` y no se modifica nada.
+- **CA-02e:** un usuario `receptionist` que intente listar, crear o editar odontólogos o franjas recibe `403 FORBIDDEN` y no se modifica nada; sin sesión, `401`. La opción **Odontólogos** del menú no se muestra a la recepción y una URL escrita a mano muestra "Sin acceso".
+- **CA-02f:** **horario predeterminado.** Al crear un odontólogo queda activo y con lunes a viernes 08:00–17:00 y sábados 09:00–13:00; el formulario permite ajustarlo antes de crearlo. El botón "Restablecer horario predeterminado" rellena el formulario con ese horario y solo cambia el horario guardado al pulsar "Guardar horario".
+- **CA-02g:** el **combobox del módulo** lista a todos los odontólogos (los inactivos aparecen marcados) más la opción "Nuevo odontólogo", y al elegir uno carga sus datos y su horario para editarlos. La lista de odontólogos es la misma fuente de los selectores de la landing (`/`), de `/disponibilidad` y de Nueva cita, que muestran solo a los **activos**: un odontólogo recién creado o reactivado aparece en ellos y uno desactivado deja de aparecer.
+- **CA-02h:** validaciones (`422`, con mensaje claro y sin cambios en la base de datos): nombre y especialidad de 2 a 100 caracteres; nombre no repetido (sin distinguir mayúsculas); franjas con horas en punto o y media (bloques de 30 minutos), fin posterior al inicio, día de 0 a 6 y como máximo 6 franjas por día. Un horario vacío es válido (el odontólogo no ofrece horarios).
+- **CA-02i:** el reemplazo del horario es **atómico** (todo o nada): el horario anterior se conserva si hay cualquier error. Si el cambio dejara citas futuras confirmadas fuera de las nuevas franjas, responde `409 SCHEDULE_CONFLICT` con un mensaje que indica cuáles (fecha, hora y paciente, visibles solo para `admin`) y no cambia nada.
+- **CA-02j:** desactivar a un odontólogo **no elimina** nada: conserva sus citas, solicitudes y horario. Las citas futuras ya confirmadas siguen vigentes (el personal las gestiona); no se ofrecen horarios nuevos ni se pueden aprobar solicitudes pendientes suyas (`409 SLOT_UNAVAILABLE`).
+- **CA-02k:** cada operación de escritura la valida el servidor (autenticación, rol `admin` y datos) y se ejecuta con funciones PostgreSQL transaccionales; el navegador nunca escribe directamente en `doctors` ni en `weekly_schedules`.
 
 ### RF-03 — Consulta de disponibilidad
 
@@ -189,7 +196,7 @@ Regla de autorización: un usuario autenticado cuya cuenta no tenga fila en `sta
 - **CA-11a:** una persona sin sesión abre `/` y ve, sin navegar a otra página: la presentación de la clínica, las **tarjetas de servicios**, el **formulario de solicitud**, los **datos de contacto** y el acceso del personal.
 - **CA-11b:** el formulario de la landing usa únicamente las APIs públicas existentes (`GET /api/public/doctors`, `GET /api/public/slots`, `POST /api/public/appointment-requests`) y cumple íntegramente RF-03 y RF-08: horarios libres de 30 minutos, validaciones, idempotencia y límites. Al enviar, muestra el **número de solicitud** y aclara que **todavía no es una cita confirmada**.
 - **CA-11c:** el acceso del personal (botón en el encabezado y en el pie) lleva a `/login`; con sesión válida, `/login` redirige al panel. La landing no muestra datos del personal, de pacientes ni rutas internas, y `/admin/*` sigue protegido según RF-01.
-- **CA-11d:** los datos de contacto son **ficticios** y están identificados como tales: ubicación Oreamuno de Cartago, Costa Rica; teléfono 2500 0002; correo de dominio reservado (`info@dentalflow.example`); horario general lunes a viernes de 8:00 a 17:00, coherente con los horarios sembrados. El pie declara que la clínica es simulada.
+- **CA-11d:** los datos de contacto son **ficticios** y están identificados como tales: ubicación Oreamuno de Cartago, Costa Rica; teléfono 2500 0002; correo de dominio reservado (`info@dentalflow.example`); horario general lunes a viernes de 8:00 a 17:00 y sábados de 9:00 a 13:00, coherente con el horario predeterminado de los odontólogos. El pie declara que la clínica es simulada.
 - **CA-11e:** los servicios se muestran como **tarjetas informativas** (nombre, descripción breve e ícono). No incluyen precios ni promesas de disponibilidad por servicio; la disponibilidad real proviene solo de odontólogos y horarios (RF-02, RF-03).
 - **CA-11f:** la página se usa sin desplazamiento horizontal desde 320 px de ancho, se puede recorrer con teclado (foco visible, enlace para saltar al contenido), respeta la preferencia de movimiento reducido y mantiene contraste legible.
 - **CA-11g:** `/disponibilidad` sigue funcionando como página independiente con el mismo comportamiento validado.
@@ -320,9 +327,10 @@ Respuestas JSON. Cualquier error conocido devuelve `{ "error": { "code": "...", 
 | `POST /api/admin/appointment-requests/:id/approve` | Personal | — | `200 {appointmentId,requestStatus:"approved",syncState}` (idempotente); `409 SLOT_UNAVAILABLE`/`REQUEST_ALREADY_DECIDED`/`REQUEST_EXPIRED`; `404`; `401/403`. |
 | `POST /api/admin/appointment-requests/:id/reject` | Personal | `{reason?}` | `200 {requestStatus:"rejected"}`; `409 REQUEST_ALREADY_DECIDED`; `422`; `404`; `401/403`. |
 | `POST /api/admin/login` | — | **No se crea**: el cliente usa el SDK de Supabase Auth. | — |
-| `GET /api/admin/doctors` | Personal | — | `200`; `401/403`. |
-| `POST /api/admin/doctors` / `PATCH /api/admin/doctors/:id` | Admin | Datos del odontólogo | `200/201`; `422`; `401/403`. |
-| `PUT /api/admin/doctors/:id/schedules` | Admin | `{windows:[{weekday,startTime,endTime}]}` | `200` agenda; `409` si rompe citas futuras; `422`; `401/403`. |
+| `GET /api/admin/doctors` | Admin | — | `200 {doctors:[{id,fullName,specialty,isActive,windows}]}` (activos e inactivos); `401/403`. |
+| `POST /api/admin/doctors` | Admin | `{fullName,specialty,windows?}` (sin `windows` se aplica el horario predeterminado) | `201 {doctor}`; `422`; `401/403`. |
+| `PATCH /api/admin/doctors/:id` | Admin | `{fullName,specialty,isActive}` | `200 {doctor}`; `422`; `404`; `401/403`. |
+| `PUT /api/admin/doctors/:id/schedules` | Admin | `{windows:[{weekday,startTime,endTime}]}` (reemplaza todo el horario; `weekday` 0 = domingo, horas `HH:MM` en punto o y media) | `200 {doctorId,windows}`; `409 SCHEDULE_CONFLICT` si deja citas futuras fuera del horario; `422`; `404`; `401/403`. |
 | `POST /api/admin/google/connect` | Admin | JWT en cabecera | `200 {authorizationUrl}`; el servidor guarda `state` en `private.oauth_states`. |
 | `GET /api/admin/google/callback` | Google OAuth | `code`, `state` | Validación de `state` (existencia, expiración, uso único, usuario), intercambio seguro y redirect al panel; `state` inválido → redirect con error sin guardar tokens. |
 | `GET /api/admin/google/status` | Personal | — | `200 {connected,calendarId}`; nunca tokens. |
@@ -331,7 +339,7 @@ Respuestas JSON. Cualquier error conocido devuelve `{ "error": { "code": "...", 
 | `GET /api/admin/reminder-previews` | Personal | — | `200` vistas previas marcadas como simulación. |
 | `GET /api/admin/system-status` | Personal | — | `200 {mode, supabase, google}`; sin secretos. |
 
-**Códigos de error estables:** `VALIDATION_ERROR` (422), `SLOT_UNAVAILABLE`, `IDEMPOTENCY_KEY_REUSED`, `INVALID_TRANSITION`, `REQUEST_ALREADY_DECIDED`, `REQUEST_EXPIRED` (409), `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `RATE_LIMITED` (429), `SERVICE_UNAVAILABLE` (503).
+**Códigos de error estables:** `VALIDATION_ERROR` (422), `SLOT_UNAVAILABLE`, `IDEMPOTENCY_KEY_REUSED`, `INVALID_TRANSITION`, `REQUEST_ALREADY_DECIDED`, `REQUEST_EXPIRED`, `SCHEDULE_CONFLICT` (409), `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `RATE_LIMITED` (429), `SERVICE_UNAVAILABLE` (503).
 
 **Autenticación de APIs administrativas:** `Authorization: Bearer <Supabase access_token>` (excepto callback OAuth, protegido mediante `state` temporal ligado a una sesión de conexión iniciada por el administrador). Verificar siempre token y rol en servidor.
 
@@ -380,6 +388,7 @@ Las migraciones de `supabase/migrations/` se aplican a un proyecto Supabase Clou
 - `P-14`: matriz de roles: `receptionist` y `admin` obtienen lo permitido y `403` en lo denegado (CA-02e, desconexión Google).
 - `P-15`: desconexión y reconexión de Google; `state` expirado, reutilizado o desconocido rechazado; sin tokens en respuestas.
 - `P-16`: simulación de fallo de Supabase → `503`, ninguna escritura ni confirmación falsa; fallo de Google → citas conservadas.
+- `P-18`: administración de odontólogos (RF-02): alta con horario predeterminado, edición, activar/desactivar, reemplazo de horario atómico, franjas inválidas o superpuestas (`422`), citas futuras fuera del nuevo horario (`409 SCHEDULE_CONFLICT`), `403` a `receptionist` y `401` sin sesión, y que un odontólogo inactivo deja de aparecer en los selectores.
 - `P-17`: landing page (RF-11): `/` responde sin sesión; contiene servicios, contacto ficticio, formulario y acceso a `/login`; el contenido de contacto coincide con CA-11d; el formulario no usa más APIs que las públicas; `/disponibilidad` y `/admin/*` conservan su comportamiento.
 
 **Criterio de salida:** todos los casos principales pasan, al menos una prueba automatizada ejecutada y documentada, `npm run lint` y `npm run typecheck` sin errores, migraciones y seed reproducibles sobre un proyecto Supabase Cloud nuevo, instalación descrita y demo ensayada. Registrar fallos encontrados, corrección humana y evidencia de tres ciclos de uso de IA.
@@ -388,8 +397,7 @@ Las migraciones de `supabase/migrations/` se aplican a un proyecto Supabase Clou
 
 **Datos iniciales sintéticos sugeridos:**
 
-- `Dra. Ana Morales` (Odontología general), lunes a viernes 08:00–12:00 y 13:00–17:00.
-- `Dr. Carlos Rojas` (Ortodoncia), lunes a viernes 09:00–12:00 y 14:00–17:00.
+- `Dra. Ana Morales` (Odontología general) y `Dr. Carlos Rojas` (Ortodoncia), ambos con el **horario predeterminado del proyecto**: lunes a viernes 08:00–17:00 y sábados 09:00–13:00.
 - Una cuenta `admin` y una `receptionist` de demostración suministradas **por canal privado**, nunca comprometidas al repo.
 - Una cuenta personal de Google dedicada a la demo y un calendario secundario de prueba (por ejemplo, "DentalFlow Demo").
 - Pacientes y correos de prueba ficticios (dominio reservado `example.com`).

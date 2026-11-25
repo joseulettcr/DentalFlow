@@ -5,6 +5,10 @@
   "devCommand": "vite --port $PORT",
   "rewrites": [
     {
+      "source": "/api/admin/doctors/:id/schedules",
+      "destination": "/api/admin/doctors/:id?part=schedules"
+    },
+    {
       "source": "/login",
       "destination": "/index.html"
     },

@@ -38,6 +38,7 @@ No se requiere Docker ni Supabase local.
 | Solicitudes (personal) | `/admin/solicitudes`: aprobar (crea una cita confirmada, sin duplicados, aunque se repita o compita) o rechazar con motivo opcional; el conflicto de horario se informa y la solicitud sigue pendiente |
 | Cita telefónica | `/admin/nueva-cita`: el personal registra una cita confirmada de inmediato; mismas reglas de horario, idempotencia y control de doble reserva |
 | Gestión de citas | `/admin/citas`: ver citas próximas y por cerrar; **Cancelar** (con confirmación, libera el horario) y **Completar** (solo citas ya terminadas); auditoría en `appointment_audit` |
+| Odontólogos y horarios | `/admin/odontologos` (**solo `admin`**): crear, editar, activar o desactivar odontólogos y definir sus franjas semanales; todos arrancan con el horario del proyecto (lunes a viernes 8:00–17:00, sábados 9:00–13:00). Un combobox con los nombres selecciona a quién editar y los selectores de la landing y de Nueva cita muestran a los odontólogos activos de esa misma lista (RF-02) |
 | Panel | Inicio con solicitudes pendientes y citas próximas; menú por rol (recepción no ve las opciones administrativas) |
 | Seguridad | RLS deny-by-default, `service_role` solo en el backend, funciones SQL solo ejecutables por `service_role`, prueba P-10 de que `anon` no lee pacientes por la Data API |
 
@@ -48,6 +49,7 @@ No se requiere Docker ni Supabase local.
 | Login, roles y rutas protegidas | Sí | Sí (`admin` y `receptionist`) |
 | Disponibilidad, solicitud pública y aprobación | Sí | Sí |
 | Landing pública (`/`) | Sí (render, contenido y enlaces) | Revisada por el responsable |
+| Administración de odontólogos y horarios | Sí (validaciones, servicio y permisos; SQL en Postgres local) | **No** (la migración 10 está sin aplicar) |
 | Cita telefónica | Sí | Sí |
 | Dashboard y navegación por roles | Sí | Sí |
 | Cancelación de citas | Sí | Sí |
@@ -57,7 +59,6 @@ Las pruebas de integración contra Supabase (`test:t07`, `test:t08`, `test:t09`)
 
 ## Funcionalidades pendientes (no implementadas)
 
-- **Administración de odontólogos y horarios** (alta, edición, activación y franjas por `admin`): hoy solo existe la **consulta**; `/admin/odontologos` aparece marcada como *Pendiente*. Los odontólogos salen del seed.
 - **Google Calendar** (OAuth, crear y eliminar eventos, reintento, desconexión): sin implementar; `/admin/configuracion` aparece como *Pendiente*.
 - **Recordatorios simulados** (`SIMULACIÓN — NO ENVIADO`, próximas 24 horas).
 - **Salud del sistema y Modo Productivo/Contingencia** (`/api/health`, estado del sistema, avisos en la interfaz). Hoy, si Supabase falla, las APIs responden `503` sin escribir nada, pero no hay banner ni modo explícito.
@@ -114,7 +115,7 @@ npm test            # pruebas unitarias (no necesitan red ni Supabase)
 npm run build       # compilación de producción
 ```
 
-`npm test` ejecuta las pruebas unitarias de reglas de disponibilidad, validaciones, servicios, endpoints (con Supabase simulado), permisos y navegación. Resultado al 24 de noviembre de 2026: **193 pruebas aprobadas en 13 archivos**; `lint`, `typecheck` y `build` sin errores.
+`npm test` ejecuta las pruebas unitarias de reglas de disponibilidad, validaciones, servicios, endpoints (con Supabase simulado), permisos y navegación. Resultado al 24 de noviembre de 2026: **248 pruebas aprobadas en 15 archivos**; `lint`, `typecheck` y `build` sin errores.
 
 Pruebas de **integración** (requieren un proyecto Supabase **de pruebas** con las migraciones aplicadas; escriben datos ficticios y los eliminan, y se niegan a correr contra otro proyecto):
 

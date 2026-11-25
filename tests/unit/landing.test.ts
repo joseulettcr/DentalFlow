@@ -41,12 +41,10 @@ describe('landing page (RF-11, P-17)', () => {
     expect(page).toContain('Dirección ficticia')
   })
 
-  it('CA-11d: el horario general coincide con los horarios sembrados (08:00 a 17:00)', () => {
+  it('CA-11d: el horario general coincide con el horario predeterminado sembrado (L–V 08–17, sábado 09–13)', () => {
     const seed = read('supabase/seed.sql')
-    expect(seed).toContain("time '08:00'")
-    expect(seed).toContain("time '17:00'")
-    expect(CONTACT.hours).toContain('8:00')
-    expect(CONTACT.hours).toContain('17:00')
+    for (const t of ["time '08:00'", "time '17:00'", "time '09:00'", "time '13:00'"]) expect(seed).toContain(t)
+    for (const t of ['8:00', '17:00', '9:00', '13:00', 'Sábados']) expect(CONTACT.hours).toContain(t)
   })
 
   it('CA-11e: seis servicios únicos, informativos y sin precios', () => {

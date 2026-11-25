@@ -95,3 +95,24 @@ export const changeAppointmentStatus = (id: string, action: StatusAction) =>
     method: 'PATCH',
     body: JSON.stringify({ action }),
   })
+
+// --- Administración de odontólogos y horarios (RF-02; solo admin: el servidor devuelve 403 a cualquier otro rol) ---
+
+export interface AdminDoctor {
+  id: string
+  fullName: string
+  specialty: string
+  isActive: boolean
+  windows: Array<{ weekday: number; startTime: string; endTime: string }>
+}
+
+export const listAdminDoctors = () => adminFetch<{ doctors: AdminDoctor[] }>('/api/admin/doctors')
+
+export const createAdminDoctor = (payload: { fullName: string; specialty: string; windows: AdminDoctor['windows'] }) =>
+  adminFetch<{ doctor: AdminDoctor }>('/api/admin/doctors', { method: 'POST', body: JSON.stringify(payload) })
+
+export const updateAdminDoctor = (id: string, payload: { fullName: string; specialty: string; isActive: boolean }) =>
+  adminFetch<{ doctor: { id: string; isActive: boolean } }>(`/api/admin/doctors/${id}`, { method: 'PATCH', body: JSON.stringify(payload) })
+
+export const saveDoctorSchedule = (id: string, windows: AdminDoctor['windows']) =>
+  adminFetch<{ doctorId: string }>(`/api/admin/doctors/${id}/schedules`, { method: 'PUT', body: JSON.stringify({ windows }) })

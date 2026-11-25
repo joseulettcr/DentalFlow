@@ -1,6 +1,6 @@
 # DentalFlow — intent.md
 
-**Versión:** 0.3 (v0.2 de alineamiento documental T-00 más la landing page pública, rama `feature/landing-page`, 2026-11-24)
+**Versión:** 0.4 (v0.3 más la administración de odontólogos y horarios, rama `feature/admin-odontologos`, 2026-11-24)
 
 **Proyecto:** DentalFlow — Gestión de citas para una clínica odontológica
 
@@ -33,7 +33,7 @@ La clínica y todos los pacientes, odontólogos, correos y números de contacto 
 
 Aplicación web responsiva que permita:
 
-1. Configurar odontólogos y horarios semanales desde un panel protegido (`admin`).
+1. Administrar odontólogos y horarios desde un módulo del panel **exclusivo del rol `admin`**: alta, edición, activación o desactivación y franjas semanales. Todos los odontólogos usan por defecto el **horario del proyecto**: lunes a viernes de 8:00 a 17:00 y sábados de 9:00 a 13:00 (domingo cerrado), que el administrador puede ajustar por odontólogo. La lista de odontólogos activos es la misma que alimenta los selectores (combobox) de la landing, de la reserva telefónica y del propio módulo.
 2. Consultar horarios disponibles por odontólogo y fecha.
 3. Registrar citas por **dos vías**:
    - **Reserva telefónica directa:** el personal autorizado registra la cita en el panel y queda confirmada de inmediato si el horario es válido y está libre.
@@ -64,7 +64,7 @@ Si la comparación no alcanza la meta, se reporta el resultado real de la prueba
 
 - Aplicación React + TypeScript con **landing page pública** (servicios, contacto, formulario de solicitud sin login y acceso al sitio administrativo) y dashboard administrativo.
 - Inicio y cierre de sesión del personal con Supabase Auth; dos roles (`admin`, `receptionist`); no hay registro público de personal.
-- Registro, activación/desactivación de odontólogos y configuración de franjas semanales de atención (`admin`).
+- Registro, edición, activación/desactivación de odontólogos y configuración de franjas semanales de atención (`admin`), con el horario predeterminado de lunes a viernes de 8:00 a 17:00 y sábados de 9:00 a 13:00. Un odontólogo inactivo no se ofrece en ningún selector ni para nuevas solicitudes, pero su historial se conserva (nunca se elimina).
 - Citas de **30 minutos**, en la zona horaria `America/Costa_Rica`. Las solicitudes públicas respetan una ventana de **1 hora a 30 días** de anticipación al momento de enviarse.
 - Reserva telefónica directa por personal autorizado.
 - Solicitud pública sin login (`appointment_requests`), estado pendiente, y aprobación/rechazo por personal autorizado, seguras frente a concurrencia y reintentos.

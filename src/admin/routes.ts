@@ -19,7 +19,7 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { path: '/admin/solicitudes', label: 'Solicitudes', title: 'Solicitudes de citas', permission: 'requests.decide', status: 'ready' },
   { path: '/admin/citas', label: 'Citas', title: 'Citas confirmadas', permission: 'appointments.read', status: 'ready' },
   // Opciones administrativas (solo admin): la escritura de odontólogos y la gestión de Google son de `admin` (spec.md §1).
-  { path: '/admin/odontologos', label: 'Odontólogos', title: 'Odontólogos', permission: 'doctors.write', status: 'pending' },
+  { path: '/admin/odontologos', label: 'Odontólogos', title: 'Odontólogos y horarios', permission: 'doctors.write', status: 'ready' },
   { path: '/admin/configuracion', label: 'Configuración', title: 'Configuración e integraciones', permission: 'google.manage', status: 'pending' },
 ]
 
