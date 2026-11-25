@@ -102,6 +102,19 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Decisión de diseño: odontólogo inactivo o inexistente en `slots` → 422 (coherente con CA-02c/CA-04c/CA-08b).
 - Pendiente de T-05: alta/edición de odontólogos y franjas por `admin` con sus validaciones y el `403` para `receptionist`.
 
+### 3.6 Iteración T-UI — Dashboard y navegación administrativa (no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **Completada** (commit `feat(ui): implementar dashboard y navegación administrativa por roles`; hash en `git log`)
+- Tarea del plan: T-UI
+- Objetivo: separar la pantalla `/admin/citas`, que mezclaba permisos, cita telefónica, solicitudes y citas confirmadas, en un panel con barra lateral, encabezado con usuario y rol, y pantallas independientes, sin cambiar reglas de negocio ni contratos de API.
+- Prompt utilizado: "T-UI: Dashboard y navegación administrativa" (restricciones: conservar el comportamiento validado, no tocar migraciones ni datos, no implementar odontólogos ni Google Calendar, sin dependencias nuevas, sin commit ni push durante la iteración).
+- Archivos: `src/admin/routes.ts`, `src/components/{AdminLayout,AppLink}.tsx`, `src/pages/AdminDashboard.tsx`, `src/pages/admin/*` (inicio, nueva cita, solicitudes, citas, pendientes), `src/pages/PhoneBookingPanel.tsx` (solo el título), `src/auth/guard.ts` (el inicio del panel pasa a `/admin`), `src/styles.css`, `tests/unit/{admin-routes,auth-ui}.test.ts`; se eliminó `src/pages/RequestsPanel.tsx` (su lógica pasó a `RequestsPage` y `AppointmentsPage`).
+- Resultado generado por Claude Code: mapa de rutas con permisos de la matriz de `spec.md` §1 (recepción no ve Odontólogos ni Configuración; por URL manual recibe "Sin acceso"), opciones sin funcionalidad marcadas "Pendiente", inicio con indicadores que reutilizan los endpoints existentes, estados de carga, error y vacío, y diseño responsive con menú en móvil.
+- Revisión humana: el responsable validó manualmente el dashboard, la navegación por roles y los formularios independientes.
+- Pruebas ejecutadas y resultados: 170 pruebas unitarias aprobadas (acceso por rol, URLs escritas a mano, protección de rutas, guardia de sesión), `lint`, `typecheck` y `build`; `vercel dev` con todas las rutas `/admin/*` respondiendo 200 y la API administrativa en 401 sin sesión. El diff contra el commit anterior confirma que `api/`, `shared/`, migraciones y `vercel.json` no cambiaron (contratos intactos).
+- Límites conocidos: no hay pruebas de renderizado de componentes (no se agregó jsdom); el comportamiento visual se validó manualmente.
+- Aprendizaje obtenido: mover la decisión de qué mostrar a un mapa de rutas puro permite probar el acceso por rol sin renderizar, y mantener la autorización real en el backend evita que la navegación sea una barrera de seguridad.
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: **Completada** (commit `feat(db): garantizar integridad de reservas y aprobación atómica`; hash en `git log`)

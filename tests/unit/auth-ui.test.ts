@@ -4,8 +4,10 @@ import { classifySignInError } from '../../src/auth/messages'
 import { fetchStaffProfile } from '../../src/lib/staffApi'
 
 describe('resolveGuard (CA-01b)', () => {
-  it('sin sesión, /admin/citas redirige a /login', () => {
-    expect(resolveGuard('/admin/citas', 'signed-out')).toEqual({ kind: 'redirect', to: '/login' })
+  it('sin sesión, cualquier ruta /admin/* (también escrita a mano) redirige a /login', () => {
+    for (const path of ['/admin', '/admin/citas', '/admin/solicitudes', '/admin/nueva-cita', '/admin/odontologos', '/admin/configuracion', '/admin/inventada']) {
+      expect(resolveGuard(path, 'signed-out')).toEqual({ kind: 'redirect', to: '/login' })
+    }
   })
   it('mientras se verifica la sesión muestra carga, no contenido protegido', () => {
     expect(resolveGuard('/admin/citas', 'loading')).toEqual({ kind: 'loading' })
@@ -13,23 +15,24 @@ describe('resolveGuard (CA-01b)', () => {
   })
   it('personal autorizado entra al panel y /login lo envía al panel', () => {
     expect(resolveGuard('/admin/citas', 'authorized')).toEqual({ kind: 'render' })
-    expect(resolveGuard('/login', 'authorized')).toEqual({ kind: 'redirect', to: '/admin/citas' })
+    expect(resolveGuard('/login', 'authorized')).toEqual({ kind: 'redirect', to: '/admin' })
   })
   it('cuenta sin perfil (forbidden) o servicio caído se muestran en su propia pantalla del panel', () => {
     expect(resolveGuard('/admin/citas', 'forbidden')).toEqual({ kind: 'render' })
     expect(resolveGuard('/admin/citas', 'unavailable')).toEqual({ kind: 'render' })
   })
   it('con sesión pero sin poder verificar el rol, /login no se queda mostrando "no configurado": va al panel', () => {
-    expect(resolveGuard('/login', 'unavailable')).toEqual({ kind: 'redirect', to: '/admin/citas' })
-    expect(resolveGuard('/login', 'forbidden')).toEqual({ kind: 'redirect', to: '/admin/citas' })
+    expect(resolveGuard('/login', 'unavailable')).toEqual({ kind: 'redirect', to: '/admin' })
+    expect(resolveGuard('/login', 'forbidden')).toEqual({ kind: 'redirect', to: '/admin' })
   })
   it('sin configuración de Supabase, el panel redirige a /login y /login se muestra', () => {
     expect(resolveGuard('/admin/citas', 'unconfigured')).toEqual({ kind: 'redirect', to: '/login' })
     expect(resolveGuard('/login', 'unconfigured')).toEqual({ kind: 'render' })
   })
-  it('/admin redirige al panel y la portada es pública', () => {
-    expect(resolveGuard('/admin', 'authorized')).toEqual({ kind: 'redirect', to: '/admin/citas' })
+  it('/admin es el inicio del panel y las páginas públicas no se protegen', () => {
+    expect(resolveGuard('/admin', 'authorized')).toEqual({ kind: 'render' })
     expect(resolveGuard('/', 'signed-out')).toEqual({ kind: 'render' })
+    expect(resolveGuard('/disponibilidad', 'signed-out')).toEqual({ kind: 'render' })
   })
 })
 

@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { resolveAdminRoute } from '../admin/routes'
 import { useAuth } from '../auth/useAuth'
-import { ALL_PERMISSIONS, PERMISSIONS } from '../../shared/permissions'
-import { PhoneBookingPanel } from './PhoneBookingPanel'
-import { RequestsPanel } from './RequestsPanel'
+import { AdminLayout } from '../components/AdminLayout'
+import { usePathname } from '../router'
+import { AppointmentsPage } from './admin/AppointmentsPage'
+import { HomePage } from './admin/HomePage'
+import { NewAppointmentPage } from './admin/NewAppointmentPage'
+import { RequestsPage } from './admin/RequestsPage'
+import { NotFoundPage, PendingFeaturePage, RestrictedPage } from './admin/StatusPages'
 
-const ROLE_LABEL = { admin: 'Administrador', receptionist: 'Recepción' } as const
-
-/** Panel base (T-04). Las secciones reales llegan en tareas posteriores; aquí solo se muestran las opciones por rol. */
+/** Entrada del panel administrativo: estados de sesión, layout compartido y la pantalla de la ruta actual. */
 export function AdminDashboard() {
   const { profile, status, signOut } = useAuth()
-  const [refreshKey, setRefreshKey] = useState(0)
+  const pathname = usePathname()
 
   if (status === 'forbidden') {
     return (
@@ -40,27 +42,37 @@ export function AdminDashboard() {
     )
   }
 
-  const allowed = new Set(profile.permissions)
+  const resolution = resolveAdminRoute(pathname, profile.permissions)
+  const currentRoute = resolution.kind === 'not-found' ? null : resolution.route
+
+  let screen
+  if (resolution.kind === 'not-found') screen = <NotFoundPage />
+  else if (resolution.kind === 'forbidden') screen = <RestrictedPage />
+  else {
+    switch (resolution.route.path) {
+      case '/admin':
+        screen = <HomePage permissions={profile.permissions} displayName={profile.displayName} />
+        break
+      case '/admin/nueva-cita':
+        screen = <NewAppointmentPage />
+        break
+      case '/admin/solicitudes':
+        screen = <RequestsPage />
+        break
+      case '/admin/citas':
+        screen = <AppointmentsPage />
+        break
+      case '/admin/odontologos':
+        screen = <PendingFeaturePage title="Odontólogos" description="La administración de odontólogos y horarios todavía no está habilitada (tarea T-05 en curso)." />
+        break
+      default:
+        screen = <PendingFeaturePage title="Configuración e integraciones" description="La conexión con Google Calendar y otras integraciones todavía no están habilitadas." />
+    }
+  }
 
   return (
-    <main className="app-shell">
-      <section aria-labelledby="dashboard-title" className="welcome-card wide">
-        <p className="eyebrow">Panel administrativo</p>
-        <h1 id="dashboard-title" className="page-title">Hola, {profile.displayName || 'equipo'}</h1>
-        <p className="lead">Rol: <strong>{ROLE_LABEL[profile.role]}</strong></p>
-        <ul className="permission-list" aria-label="Opciones según tu rol">
-          {ALL_PERMISSIONS.map((permission) => (
-            <li key={permission} className={allowed.has(permission) ? 'allowed' : 'denied'}>
-              <span aria-hidden="true">{allowed.has(permission) ? '✔' : '—'}</span>{' '}
-              {PERMISSIONS[permission].label}
-              {!allowed.has(permission) && <em> (solo administrador)</em>}
-            </li>
-          ))}
-        </ul>
-        {allowed.has('appointments.create_phone') && <PhoneBookingPanel onCreated={() => setRefreshKey((k) => k + 1)} />}
-        <RequestsPanel canDecide={allowed.has('requests.decide')} canReadAppointments={allowed.has('appointments.read')} refreshKey={refreshKey} />
-        <button type="button" onClick={() => void signOut()}>Cerrar sesión</button>
-      </section>
-    </main>
+    <AdminLayout profile={profile} pathname={pathname} currentRoute={currentRoute} onSignOut={() => void signOut()}>
+      {screen}
+    </AdminLayout>
   )
 }

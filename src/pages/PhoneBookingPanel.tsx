@@ -111,8 +111,7 @@ export function PhoneBookingPanel({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <section aria-labelledby="phone-title" className="phone-booking">
-      <h2 id="phone-title">Nueva cita telefónica</h2>
+    <section aria-label="Formulario de cita telefónica" className="phone-booking">
       <p className="lead small">La cita queda confirmada al instante. Los horarios mostrados ya excluyen las citas confirmadas.</p>
       {success && <p role="status" className="notice">{success}</p>}
       {doctorsError && <p role="alert" className="notice notice-error">No pudimos cargar los odontólogos.</p>}

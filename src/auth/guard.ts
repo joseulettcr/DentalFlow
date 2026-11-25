@@ -11,7 +11,7 @@ export type GuardDecision =
   | { kind: 'redirect'; to: string }
 
 export const LOGIN_PATH = '/login'
-export const DASHBOARD_PATH = '/admin/citas'
+export const DASHBOARD_PATH = '/admin'
 
 export function isAdminPath(pathname: string): boolean {
   return pathname === '/admin' || pathname.startsWith('/admin/')
@@ -21,7 +21,6 @@ export function resolveGuard(pathname: string, status: AuthStatus): GuardDecisio
   if (isAdminPath(pathname)) {
     if (status === 'loading') return { kind: 'loading' }
     if (status === 'signed-out' || status === 'unconfigured') return { kind: 'redirect', to: LOGIN_PATH }
-    if (pathname === '/admin') return { kind: 'redirect', to: DASHBOARD_PATH }
     return { kind: 'render' } // authorized, forbidden y unavailable muestran su propia pantalla
   }
   if (pathname === LOGIN_PATH) {
