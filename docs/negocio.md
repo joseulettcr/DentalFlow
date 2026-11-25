@@ -19,7 +19,7 @@ DentalFlow busca centralizar el agendamiento, evitar conflictos de horario y dej
 |---|---|---|
 | **Paciente** | Consulta horarios libres y envía una **solicitud** de cita desde un formulario público. No crea cuenta. La solicitud **no es una cita** hasta que el personal la apruebe | Público (`/disponibilidad`) |
 | **Recepcionista** (`receptionist`) | Registra citas telefónicas, aprueba o rechaza solicitudes, consulta la agenda, cancela y completa citas | Inicio de sesión |
-| **Administrador** (`admin`) | Todo lo anterior y, a futuro, la administración de odontólogos, horarios e integraciones | Inicio de sesión |
+| **Administrador** (`admin`) | Todo lo anterior y la administración de odontólogos y horarios (crear, editar, activar o desactivar y definir franjas); a futuro, las integraciones | Inicio de sesión |
 | **Odontólogo** | Es una entidad de la agenda, **sin** portal ni cuenta propia | — |
 
 Las cuentas del personal las crea manualmente el responsable en Supabase; no hay registro público de personal. La matriz detallada de permisos está en [spec.md](../spec.md) §1.
@@ -79,7 +79,7 @@ Si el resultado no alcanza la meta, se reporta tal como salga y se documenta la 
 
 **Incluido y funcionando** (ver estado de validación en el [README](../README.md)): consulta pública de disponibilidad, solicitud pública con idempotencia y límites de uso, aprobación y rechazo, cita telefónica, cancelación y finalización con auditoría, inicio de sesión con dos roles, dashboard con navegación por rol y datos sintéticos.
 
-**Comprometido en el plan pero aún no implementado:** administración de odontólogos y horarios, sincronización con Google Calendar, recordatorios simulados, salud del sistema con Modo Productivo/Contingencia, filtros e historial de citas, despliegue en Vercel.
+**Comprometido en el plan pero aún no implementado:** sincronización con Google Calendar, recordatorios simulados, salud del sistema con Modo Productivo/Contingencia, filtros e historial de citas, despliegue en Vercel.
 
 ## 7. Limitaciones
 

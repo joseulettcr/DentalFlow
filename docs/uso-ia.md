@@ -144,6 +144,20 @@ Los tres ciclos corresponden a IA-01, IA-02 e IA-03 de `plan.md` §6 y a las tar
 - Límites conocidos: no hay captura de pantalla ni prueba visual automatizada (no hay navegador disponible en el entorno de desarrollo); las tipografías se cargan desde Google Fonts y, sin conexión, se usan las del sistema.
 - Commit de Git: `2e4aee8`; fusión a `main`: `69e1a5b`.
 
+### 3.9 Iteración T-05 — Administración de odontólogos y horarios (RF-02; no cuenta como ciclo IA-01 a IA-03)
+
+- Estado: **En desarrollo en la rama `feature/admin-odontologos`** (sin fusionar; migración 10 sin aplicar; sin validación manual)
+- Tarea del plan: T-05
+- Objetivo: módulo `/admin/odontologos` exclusivo de `admin` para crear, editar, activar o desactivar odontólogos y definir sus franjas semanales, con el horario predeterminado de lunes a viernes 08:00–17:00 y sábados 09:00–13:00, y con un combobox cuya lista alimenta los selectores de la landing y de Nueva cita.
+- Prompt utilizado: solicitud del responsable de crear una rama, actualizar `intent.md`, `spec.md` y `plan.md` (v0.4) e implementar el módulo restringido al rol `admin`.
+- Archivos: `intent.md`, `spec.md`, `plan.md`, `supabase/migrations/20261124010000_doctor_admin.sql`, `supabase/seed.sql`, `shared/schedule.ts`, `api/_lib/doctors-admin-service.ts`, `api/admin/doctors/index.ts`, `api/admin/doctors/[...path].ts`, `api/_lib/http.ts`, `src/pages/admin/DoctorsPage.tsx`, `src/lib/adminApi.ts`, `src/admin/routes.ts`, `src/pages/AdminDashboard.tsx`, `src/landing/content.ts`, `src/pages/LandingPage.tsx`, `src/styles.css`, `tests/unit/{doctors-admin,admin-routes,landing}.test.ts`, `README.md`, `docs/demo.md`, `docs/negocio.md`.
+- Resultado generado por Claude Code: tres funciones SQL transaccionales (`create_doctor`, `update_doctor`, `set_doctor_schedule`) que reemplazan el horario completo de forma atómica y rechazan con `SCHEDULE_CONFLICT` los cambios que dejarían citas futuras confirmadas fuera del horario; endpoints solo `admin`; validaciones compartidas entre servidor y formulario; y la pantalla con combobox, datos, activo/inactivo y editor semanal con botón "Restablecer horario predeterminado".
+- Decisiones de diseño: (1) el módulo es exclusivo de `admin` por indicación del responsable, lo que retira la vista de solo lectura que D-04/D-05 daban a la recepción; (2) las dos rutas de edición (`PATCH /api/admin/doctors/:id` y `PUT /api/admin/doctors/:id/schedules`) comparten una función mediante una reescritura de `vercel.json`, porque el plan de Vercel limita a 12 funciones (el proyecto queda exactamente en 12) y una ruta comodín `[...path]` no resolvió rutas anidadas en `vercel dev`; (3) los odontólogos existentes conservan su horario hasta que el administrador los restablezca, porque no se modifican datos remotos desde la migración.
+- Pruebas ejecutadas y resultados: 248 pruebas unitarias aprobadas (43 nuevas: horario predeterminado, franjas inválidas y superpuestas, datos del odontólogo, servicio, conflicto de citas, 401/403 por rol y rutas); 33 comprobaciones de la migración y del seed en Postgres local (PGlite), incluida la atomicidad, el conflicto con citas futuras, que lo cancelado no cuenta, la desactivación sin perder historial y que un inactivo no recibe solicitudes; `lint`, `typecheck` y `build`.
+- Límites conocidos: no se ejecutó nada contra Supabase; una reserva creada justo mientras se guarda un horario podría quedar fuera de él (no se bloquea la creación de citas); no hay prueba de integración con concurrencia real de esta función.
+- Revisión humana: **pendiente**.
+- Commit de Git: ver `git log` de la rama `feature/admin-odontologos`.
+
 ### Ciclo 1 (IA-01) — Restricción de solapamiento y aprobación atómica
 
 - Estado: **Completada** (commit `feat(db): garantizar integridad de reservas y aprobación atómica`, hash `a4e714e`)

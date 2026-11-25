@@ -3,6 +3,7 @@ import { useAuth } from '../auth/useAuth'
 import { AdminLayout } from '../components/AdminLayout'
 import { usePathname } from '../router'
 import { AppointmentsPage } from './admin/AppointmentsPage'
+import { DoctorsPage } from './admin/DoctorsPage'
 import { HomePage } from './admin/HomePage'
 import { NewAppointmentPage } from './admin/NewAppointmentPage'
 import { RequestsPage } from './admin/RequestsPage'
@@ -63,7 +64,7 @@ export function AdminDashboard() {
         screen = <AppointmentsPage canManage={profile.permissions.includes('appointments.cancel_complete')} />
         break
       case '/admin/odontologos':
-        screen = <PendingFeaturePage title="Odontólogos" description="La administración de odontólogos y horarios todavía no está habilitada (tarea T-05 en curso)." />
+        screen = <DoctorsPage />
         break
       default:
         screen = <PendingFeaturePage title="Configuración e integraciones" description="La conexión con Google Calendar y otras integraciones todavía no están habilitadas." />

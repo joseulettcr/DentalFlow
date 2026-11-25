@@ -17,8 +17,8 @@ describe('navegación por roles', () => {
 
   it('las opciones sin funcionalidad están marcadas como pendientes y las operativas no', () => {
     const pending = ADMIN_ROUTES.filter((r) => r.status === 'pending').map((r) => r.path)
-    expect(pending).toEqual(['/admin/odontologos', '/admin/configuracion'])
-    expect(ADMIN_ROUTES.filter((r) => r.status === 'ready').map((r) => r.path)).toEqual(['/admin', '/admin/nueva-cita', '/admin/solicitudes', '/admin/citas'])
+    expect(pending).toEqual(['/admin/configuracion'])
+    expect(ADMIN_ROUTES.filter((r) => r.status === 'ready').map((r) => r.path)).toEqual(['/admin', '/admin/nueva-cita', '/admin/solicitudes', '/admin/citas', '/admin/odontologos'])
   })
 
   it('cada pantalla usa un permiso real de la matriz de spec.md §1', () => {

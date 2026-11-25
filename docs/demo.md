@@ -19,7 +19,7 @@
 
 | Dato | Valor |
 |---|---|
-| Odontólogos | Dra. Ana Morales (Odontología general, lun–vie 08:00–12:00 y 13:00–17:00) · Dr. Carlos Rojas (Ortodoncia, lun–vie 09:00–12:00 y 14:00–17:00) |
+| Odontólogos | Dra. Ana Morales (Odontología general) · Dr. Carlos Rojas (Ortodoncia); horario predeterminado del proyecto: lunes a viernes 08:00–17:00 y sábados 09:00–13:00 (tras aplicar la migración 10 y restablecer el horario desde `/admin/odontologos`, o en una base nueva con el seed) |
 | Paciente 1 (solicitud) | Paciente Demo Uno · `paciente.uno@example.com` · 8888 0001 |
 | Paciente 2 (conflicto) | Paciente Demo Dos · `paciente.dos@example.com` · 8888 0002 |
 | Paciente telefónico | Paciente Demo Telefónico · `paciente.telefono@example.com` · 8888 0003 |
@@ -85,7 +85,7 @@
 ### 9:00–10:00 · Entrada inválida y comprobación ejecutable
 - **Entrada inválida:** en `/disponibilidad`, enviar una solicitud con el correo `paciente-sin-arroba`. **Resultado esperado:** mensaje de validación y no se crea nada.
 - **Conflicto (opcional, requiere preparación):** antes del bloque de aprobación, abrir una **segunda pestaña** en `/disponibilidad`, elegir el mismo horario de 10:00 y completar el formulario con *Paciente Demo Dos* **sin enviarlo**. Después de aprobar la primera solicitud, enviar esta: el sistema responde que el horario ya no está disponible y no crea nada. (Un horario ocupado ya no aparece en la lista, por eso hace falta la segunda pestaña.)
-- **Pruebas automáticas:** ejecutar `npm test` en la terminal (segundos, sin red). **Resultado esperado:** 193 pruebas aprobadas en 13 archivos (cifra al 24 de noviembre de 2026; actualizarla si cambia). Mencionar que `lint`, `typecheck` y `build` también pasan.
+- **Pruebas automáticas:** ejecutar `npm test` en la terminal (segundos, sin red). **Resultado esperado:** 248 pruebas aprobadas en 15 archivos (cifra al 24 de noviembre de 2026; actualizarla si cambia). Mencionar que `lint`, `typecheck` y `build` también pasan.
 - **Corrección hecha con el agente:** contar un caso **real** documentado en `docs/uso-ia.md` §3.4: una regla de reescritura de Vercel servía HTML en lugar de JavaScript y rompía Vite; el agente la reprodujo y se corrigió limitándola a las rutas de la aplicación.
 
 ### 10:00–12:00 · Documentos, evidencia de IA y cierre
@@ -93,7 +93,7 @@
 2. **Abrir `docs/uso-ia.md`** y mostrar solo lo que existe: **IA-01** (T-03: restricción de no superposición y aprobación atómica; 17 pruebas aprobadas en el proyecto de pruebas) e **IA-02** (T-07, T-08, T-09A; validada manualmente). **IA-03 no está realizada**: decirlo y explicar la propuesta de su nota de alcance. Mostrar, de un ciclo, el prompt, la revisión humana y el commit.
 3. **Indicador:** el principal (mediana de tiempo de agendamiento, meta de reducir al menos 50 %) está **definido pero pendiente de medir**; si ya se cronometraron los cinco casos, mostrar la tabla de `docs/negocio.md`; si no, decirlo. No presentar cifras que no existan.
 4. **Costos y adopción:** los costos aún no están estimados (`docs/negocio.md` §8): decirlo y mencionar los tres pasos de adopción (piloto con datos sintéticos, ajustes, ampliación controlada) y que requiere evaluación de seguridad y privacidad antes de usarse con una clínica real.
-5. **Limitaciones y próximos pasos:** caso simulado y sin mediciones; sin notificación al paciente; horario semanal fijo; la finalización de citas solo tiene pruebas automatizadas. Próximos pasos: administración de odontólogos y horarios, Google Calendar, recordatorios simulados, salud del sistema con Modo Contingencia, filtros e historial de citas y despliegue en Vercel.
+5. **Limitaciones y próximos pasos:** caso simulado y sin mediciones; sin notificación al paciente; horario semanal fijo; la finalización de citas solo tiene pruebas automatizadas. Próximos pasos: Google Calendar, recordatorios simulados, salud del sistema con Modo Contingencia, filtros e historial de citas y despliegue en Vercel.
 
 **Seguridad (decir durante el recorrido o en las preguntas):** un usuario sin sesión recibe 401 en cualquier API administrativa y sin permiso 403; el rol `anon` no puede leer pacientes por la API de datos (prueba P-10, ejecutada en el proyecto de pruebas); la clave de servicio nunca llega al navegador. La restricción de PostgreSQL decide quién gana si dos reservas compiten; las pruebas de concurrencia de aprobación (T-03) se ejecutaron y las de reserva telefónica y cancelación están escritas pero **aún no se han ejecutado contra Supabase**.
 

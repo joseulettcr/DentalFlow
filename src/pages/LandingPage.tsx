@@ -48,7 +48,7 @@ export function LandingPage() {
             <span className="lp-blob lp-blob-b" aria-hidden="true" />
             <HeroTooth />
             <p className="lp-float lp-float-a">Horarios de 30 minutos</p>
-            <p className="lp-float lp-float-b">Dos especialistas</p>
+            <p className="lp-float lp-float-b">Especialistas a tu servicio</p>
           </div>
         </section>
 
